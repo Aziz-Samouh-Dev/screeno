@@ -11,6 +11,5 @@
             "source": "/(.*)",
             "destination": "/api/lambda.php"
         }
-    ],
-    "buildCommands": "echo Skip..."
+    ]
 }
