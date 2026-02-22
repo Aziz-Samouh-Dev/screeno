@@ -6,18 +6,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
-class Product extends Model
+class Produit extends Model
 {
-    use HasFactory;
+      use HasFactory;
 
     protected $fillable = [
-        'uuid',
         'nom',
-        'image',
         'description',
         'prix_achat',
         'prix_vente',
         'quantite',
+        'image',
     ];
 
     protected static function boot(): void

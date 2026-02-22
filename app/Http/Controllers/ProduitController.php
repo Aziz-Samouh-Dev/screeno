@@ -18,12 +18,17 @@ class ProduitController extends Controller
                   ->orWhere('description', 'like', "%{$search}%");
         }
 
-        $produits = $query->latest()->paginate(2)->withQueryString();
+        $produits = $query->latest()->paginate(5)->withQueryString();
 
         return Inertia::render('Produits/Index', [
             'produits' => $produits,
+            'filters' => ['search' => $search],
         ]);
+    }
 
+    public function create()
+    {
+        return Inertia::render('Produits/Create');
     }
 
     public function store(Request $request)
@@ -34,18 +39,30 @@ class ProduitController extends Controller
             'prix_achat' => 'nullable|numeric',
             'prix_vente' => 'nullable|numeric',
             'quantite' => 'nullable|integer',
-            'image' => 'nullable|mimes:jpg,jpeg,png,webp,gif,svg,bmp,avif|max:2048',
+            'image' => 'nullable|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         if ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $filename = preg_replace('/[^A-Za-z0-9\-]/', '', $data['nom']) . '.' . $file->getClientOriginalExtension();
-            $data['image'] = $file->storeAs('produits', $filename, 'public');
+            $data['image'] = $request->file('image')->store('produits', 'public');
         }
 
         Produit::create($data);
 
-        return redirect()->route('produits.index')->with('success', 'Produit ajouté');
+        return redirect()->route('produits.index');
+    }
+
+    public function show(Produit $produit)
+    {
+        return Inertia::render('Produits/Show', [
+            'produit' => $produit
+        ]);
+    }
+
+    public function edit(Produit $produit)
+    {
+        return Inertia::render('Produits/Edit', [
+            'produit' => $produit
+        ]);
     }
 
     public function update(Request $request, Produit $produit)
@@ -56,22 +73,19 @@ class ProduitController extends Controller
             'prix_achat' => 'nullable|numeric',
             'prix_vente' => 'nullable|numeric',
             'quantite' => 'nullable|integer',
-            'image' => 'nullable|mimes:jpg,jpeg,png,webp,gif,svg,bmp,avif|max:2048',
+            'image' => 'nullable|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
         if ($request->hasFile('image')) {
             if ($produit->image && Storage::disk('public')->exists($produit->image)) {
                 Storage::disk('public')->delete($produit->image);
             }
-
-            $file = $request->file('image');
-            $filename = preg_replace('/[^A-Za-z0-9\-]/', '_', strtolower($data['nom'])) . '.' . $file->getClientOriginalExtension();
-            $data['image'] = $file->storeAs('produits', $filename, 'public');
+            $data['image'] = $request->file('image')->store('produits', 'public');
         }
 
         $produit->update($data);
 
-        return redirect()->route('produits.index')->with('success', 'Produit modifié');
+        return redirect()->route('produits.index');
     }
 
     public function destroy(Produit $produit)
@@ -81,6 +95,6 @@ class ProduitController extends Controller
         }
 
         $produit->delete();
-        return back()->with('success', 'Produit supprimé');
+        return back();
     }
 }

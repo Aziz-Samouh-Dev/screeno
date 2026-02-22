@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
-use App\Http\Controllers\ProductsController;
+use App\Http\Controllers\ProduitController;
 
 Route::get('/', function () {
     return Inertia::render('welcome', [
@@ -17,7 +17,7 @@ Route::get('dashboard', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    Route::resource('products' , productsController::class);
+     Route::resource('produits', ProduitController::class);
 
 });
 
