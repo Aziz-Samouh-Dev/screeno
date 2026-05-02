@@ -86,23 +86,23 @@ function ProductCombobox({
     return (
         <div className="relative">
             <button ref={triggerRef} type="button" onClick={openDropdown}
-                className="flex h-9 w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-3 text-sm hover:border-slate-300 transition-colors">
-                <span className={selected ? 'font-medium text-slate-900 truncate' : 'text-slate-400'}>
+                className="flex h-9 w-full items-center justify-between rounded-lg border border-border bg-card px-3 text-sm hover:border-border transition-colors">
+                <span className={selected ? 'font-medium text-foreground truncate' : 'text-muted-foreground'}>
                     {selected ? selected.nom : 'Sélectionner un produit…'}
                 </span>
-                <ChevronDown className={`h-4 w-4 text-slate-400 shrink-0 ml-2 transition-transform ${open ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-4 w-4 text-muted-foreground shrink-0 ml-2 transition-transform ${open ? 'rotate-180' : ''}`} />
             </button>
 
             {open && (
                 <div ref={dropdownRef}
                     style={{ position: 'fixed', top: pos.top, left: pos.left, width: pos.width, zIndex: 9999 }}
-                    className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
-                    <div className="p-2 border-b border-slate-100">
-                        <div className="flex items-center gap-2 px-2 py-1.5 bg-slate-50 rounded-lg">
-                            <Search className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    className="bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+                    <div className="p-2 border-b border-border/60">
+                        <div className="flex items-center gap-2 px-2 py-1.5 bg-muted/40 rounded-lg">
+                            <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                             <input autoFocus value={search} onChange={e => setSearch(e.target.value)}
                                 placeholder="Rechercher un produit…"
-                                className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400" />
+                                className="flex-1 bg-transparent text-foreground text-sm outline-none placeholder:text-muted-foreground" />
                         </div>
                     </div>
                     <div className="max-h-56 overflow-y-auto">
@@ -114,18 +114,18 @@ function ProductCombobox({
                                 <button key={p.id} type="button" disabled={disabled}
                                     onClick={() => { if (!disabled) { onChange(p); setOpen(false); setSearch(''); } }}
                                     className={`w-full text-left px-3 py-2.5 flex items-center justify-between gap-3 transition-colors ${
-                                        value === p.id ? 'bg-blue-50' :
-                                        disabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-50'
+                                        value === p.id ? 'bg-blue-50 dark:bg-blue-950/50' :
+                                        disabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-accent'
                                     }`}>
-                                    <span className="font-medium text-slate-900 text-sm truncate">{p.nom}</span>
+                                    <span className="font-medium text-foreground text-sm truncate">{p.nom}</span>
                                     <span className={`text-xs font-mono shrink-0 ${
-                                        noStock ? 'text-red-500' : p.stock_quantity <= 10 ? 'text-amber-500' : 'text-slate-400'
+                                        noStock ? 'text-red-500' : p.stock_quantity <= 10 ? 'text-amber-500' : 'text-muted-foreground'
                                     }`}>
                                         {noStock ? 'rupture' : `${p.stock_quantity} dispo.`}
                                     </span>
                                 </button>
                             );
-                        }) : <p className="px-3 py-4 text-sm text-center text-slate-400">Aucun produit trouvé</p>}
+                        }) : <p className="px-3 py-4 text-sm text-center text-muted-foreground">Aucun produit trouvé</p>}
                     </div>
                 </div>
             )}
@@ -191,24 +191,24 @@ export default function Sell({ client, products }: Props) {
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <div>
-                        <h1 className="text-xl font-bold text-slate-900">Nouvelle vente</h1>
-                        <p className="text-sm text-slate-400">{client.nom}{client.telephone ? ` · ${client.telephone}` : ''}</p>
+                        <h1 className="text-xl font-bold text-foreground">Nouvelle vente</h1>
+                        <p className="text-sm text-muted-foreground">{client.nom}{client.telephone ? ` · ${client.telephone}` : ''}</p>
                     </div>
                 </div>
 
                 {anyOverStock && (
-                    <div className="flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                    <div className="flex items-center gap-2 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 px-4 py-3 text-sm text-red-700 dark:text-red-400">
                         <AlertTriangle className="h-4 w-4 shrink-0" />
                         Quantité demandée dépasse le stock disponible pour un ou plusieurs produits.
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <form onSubmit={handleSubmit} className="rounded-3xl border border-border bg-card shadow-sm overflow-hidden">
 
                     {/* Items table */}
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
-                            <thead className="bg-slate-50 text-xs font-bold uppercase text-slate-500 border-b border-slate-100">
+                            <thead className="bg-muted/40 text-xs font-bold uppercase text-muted-foreground border-b border-border/60">
                                 <tr>
                                     <th className="px-5 py-3 text-left">Produit</th>
                                     <th className="px-5 py-3 w-28 text-center">Stock dispo.</th>
@@ -218,11 +218,11 @@ export default function Sell({ client, products }: Props) {
                                     <th className="px-5 py-3 w-10" />
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-50">
+                            <tbody className="divide-y divide-border/50">
                                 {items.map((item, index) => {
                                     const overStock = item.product_id !== null && item.quantity > item.stock_quantity;
                                     return (
-                                        <tr key={index} className={overStock ? 'bg-red-50' : 'hover:bg-slate-50/50'}>
+                                        <tr key={index} className={overStock ? 'bg-red-50 dark:bg-red-950/20' : 'hover:bg-accent'}>
                                             <td className="px-5 py-2">
                                                 <ProductCombobox
                                                     products={products}
@@ -234,11 +234,11 @@ export default function Sell({ client, products }: Props) {
                                             <td className="px-5 py-2 text-center">
                                                 {item.product_id ? (
                                                     <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-bold font-mono ${
-                                                        item.stock_quantity === 0 ? 'bg-red-100 text-red-600' :
-                                                        item.stock_quantity <= 10 ? 'bg-amber-100 text-amber-600' :
-                                                        'bg-green-100 text-green-600'
+                                                        item.stock_quantity === 0 ? 'bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400' :
+                                                        item.stock_quantity <= 10 ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400' :
+                                                        'bg-green-100 dark:bg-green-950/50 text-green-600 dark:text-green-400'
                                                     }`}>{item.stock_quantity}</span>
-                                                ) : <span className="text-slate-300">—</span>}
+                                                ) : <span className="text-muted-foreground/50">—</span>}
                                             </td>
                                             <td className="px-5 py-2 text-center">
                                                 <div>
@@ -258,14 +258,14 @@ export default function Sell({ client, products }: Props) {
                                                     onChange={e => updateItem(index, 'unit_price', Number(e.target.value))}
                                                     className="w-28 ml-auto text-right h-9" />
                                             </td>
-                                            <td className="px-5 py-2 text-right font-semibold font-mono text-xs text-slate-900">
+                                            <td className="px-5 py-2 text-right font-semibold font-mono text-xs text-foreground">
                                                 {fmt(item.quantity * item.unit_price)}
                                             </td>
                                             <td className="px-5 py-2">
                                                 {items.length > 1 && (
                                                     <Button type="button" variant="ghost" size="icon"
                                                         onClick={() => removeRow(index)}
-                                                        className="text-red-400 hover:text-red-600 hover:bg-red-50">
+                                                        className="text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40">
                                                         <Trash2 className="w-4 h-4" />
                                                     </Button>
                                                 )}
@@ -276,7 +276,7 @@ export default function Sell({ client, products }: Props) {
 
                                 {items.length === 0 && (
                                     <tr>
-                                        <td colSpan={6} className="px-5 py-12 text-center text-slate-400">
+                                        <td colSpan={6} className="px-5 py-12 text-center text-muted-foreground">
                                             <ShoppingCart className="w-8 h-8 mx-auto mb-2 opacity-30" />
                                             <p className="text-sm">Cliquez sur « Ajouter » pour commencer.</p>
                                         </td>
@@ -287,7 +287,7 @@ export default function Sell({ client, products }: Props) {
                     </div>
 
                     {/* Footer */}
-                    <div className="border-t border-slate-100 px-5 py-4 space-y-4">
+                    <div className="border-t border-border/60 px-5 py-4 space-y-4">
                         <Button type="button" variant="outline" size="sm" className="rounded-xl"
                             disabled={selectedIds.length >= products.filter(p => p.stock_quantity > 0).length}
                             onClick={addRow}>
@@ -296,18 +296,18 @@ export default function Sell({ client, products }: Props) {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                             <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Notes (optionnel)</label>
+                                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Notes (optionnel)</label>
                                 <textarea value={notes} onChange={e => setNotes(e.target.value)}
                                     rows={2} placeholder="Remarques sur la vente…"
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-slate-300" />
+                                    className="w-full rounded-xl border border-border bg-card text-foreground px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-border" />
                             </div>
 
-                            <div className="bg-slate-50 rounded-2xl p-4 space-y-2">
-                                <div className="flex justify-between text-sm text-slate-500">
+                            <div className="bg-muted/40 rounded-2xl p-4 space-y-2">
+                                <div className="flex justify-between text-sm text-muted-foreground">
                                     <span>Sous-total</span>
                                     <span className="font-mono">{fmt(subtotal)}</span>
                                 </div>
-                                <div className="flex justify-between font-bold text-slate-900 text-lg border-t border-slate-200 pt-2">
+                                <div className="flex justify-between font-bold text-foreground text-lg border-t border-border pt-2">
                                     <span>Total</span>
                                     <span className="font-mono">{fmt(subtotal)}</span>
                                 </div>

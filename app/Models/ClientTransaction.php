@@ -10,7 +10,7 @@ class ClientTransaction extends Model
     protected $fillable = [
         'uuid', 'client_id', 'type',
         'product_id', 'product_name',
-        'quantity', 'unit_price', 'total_price', 'notes',
+        'quantity', 'unit_price', 'total_price', 'notes', 'return_type',
     ];
 
     protected $casts = [

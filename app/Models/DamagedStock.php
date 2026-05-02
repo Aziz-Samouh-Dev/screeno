@@ -10,7 +10,7 @@ class DamagedStock extends Model
 
     protected $fillable = [
         'product_id', 'product_name', 'quantity',
-        'client_id', 'client_transaction_id',
+        'client_id', 'client_transaction_id', 'sales_return_item_id',
     ];
 
     public function product()
@@ -26,5 +26,10 @@ class DamagedStock extends Model
     public function clientTransaction()
     {
         return $this->belongsTo(ClientTransaction::class);
+    }
+
+    public function salesReturnItem()
+    {
+        return $this->belongsTo(SalesReturnItem::class);
     }
 }

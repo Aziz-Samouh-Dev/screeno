@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
@@ -11,38 +11,29 @@ import { edit } from '@/routes/profile';
 import { show } from '@/routes/two-factor';
 import { edit as editPassword } from '@/routes/user-password';
 
-const sidebarNavItems: NavItem[] = [
-    {
-        title: 'Profile',
-        href: edit(),
-        icon: null,
-    },
-    {
-        title: 'Password',
-        href: editPassword(),
-        icon: null,
-    },
-    {
-        title: 'Two-Factor Auth',
-        href: show(),
-        icon: null,
-    },
-    {
-        title: 'Appearance',
-        href: editAppearance(),
-        icon: null,
-    },
-    {
-        title: 'Payment Methods',
-        href: '/settings/payment_methods',
-        icon: null,
-    },
+const userNavItems: NavItem[] = [
+    { title: 'Profil',            href: edit(),                      icon: null },
+    { title: 'Mot de passe',      href: editPassword(),               icon: null },
+    { title: 'Two-Factor Auth',   href: show(),                      icon: null },
+    { title: 'Apparence',         href: editAppearance(),             icon: null },
+];
+
+const adminNavItems: NavItem[] = [
+    { title: 'Profil',            href: edit(),                      icon: null },
+    { title: 'Mot de passe',      href: editPassword(),               icon: null },
+    { title: 'Two-Factor Auth',   href: show(),                      icon: null },
+    { title: 'Apparence',         href: editAppearance(),             icon: null },
+    { title: 'Moyens de paiement', href: '/settings/payment_methods', icon: null },
+    { title: 'Utilisateurs',      href: '/settings/users',            icon: null },
+    { title: "Profil d'entreprise", href: '/settings/company',        icon: null },
 ];
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentUrl } = useCurrentUrl();
+    const { auth } = usePage().props;
+    const isAdmin = auth.user?.role === 'admin';
+    const sidebarNavItems = isAdmin ? adminNavItems : userNavItems;
 
-    // When server-side rendering, we only render the layout on the client...
     if (typeof window === 'undefined') {
         return null;
     }
@@ -50,12 +41,12 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     return (
         <div className="px-4 py-6">
             <Heading
-                title="Settings"
-                description="Manage your profile and account settings"
+                title="Paramètres"
+                description="Gérez votre profil et les paramètres de votre compte"
             />
 
             <div className="flex flex-col lg:flex-row lg:space-x-12">
-                <aside className="w-full max-w-xl lg:w-48">
+                <aside className="w-full max-w-xl lg:w-56">
                     <nav
                         className="flex flex-col space-y-1 space-x-0"
                         aria-label="Settings"

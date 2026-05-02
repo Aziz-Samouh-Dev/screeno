@@ -29,6 +29,7 @@ interface ReturnItem {
     available: number;
     unit_price: number;
     quantity: number;
+    return_type: 'stock' | 'damaged';
 }
 
 interface Props {
@@ -87,23 +88,23 @@ function ReturnCombobox({
     return (
         <div className="relative">
             <button ref={triggerRef} type="button" onClick={openDropdown}
-                className="flex h-9 w-full items-center justify-between rounded-lg border border-purple-200 bg-white px-3 text-sm hover:border-purple-300 transition-colors">
-                <span className={selected ? 'font-medium text-slate-900 truncate' : 'text-slate-400'}>
+                className="flex h-9 w-full items-center justify-between rounded-lg border border-purple-200 dark:border-purple-800 bg-card px-3 text-sm hover:border-purple-300 transition-colors">
+                <span className={selected ? 'font-medium text-foreground truncate' : 'text-muted-foreground'}>
                     {selected ? selected.product_name : 'Sélectionner un produit…'}
                 </span>
-                <ChevronDown className={`h-4 w-4 text-slate-400 shrink-0 ml-2 transition-transform ${open ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-4 w-4 text-muted-foreground shrink-0 ml-2 transition-transform ${open ? 'rotate-180' : ''}`} />
             </button>
 
             {open && (
                 <div ref={dropdownRef}
                     style={{ position: 'fixed', top: pos.top, left: pos.left, width: pos.width, zIndex: 9999 }}
-                    className="bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
-                    <div className="p-2 border-b border-slate-100">
-                        <div className="flex items-center gap-2 px-2 py-1.5 bg-slate-50 rounded-lg">
-                            <Search className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    className="bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+                    <div className="p-2 border-b border-border/60">
+                        <div className="flex items-center gap-2 px-2 py-1.5 bg-muted/40 rounded-lg">
+                            <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                             <input autoFocus value={search} onChange={e => setSearch(e.target.value)}
                                 placeholder="Rechercher un produit…"
-                                className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400" />
+                                className="flex-1 bg-transparent text-foreground text-sm outline-none placeholder:text-muted-foreground" />
                         </div>
                     </div>
                     <div className="max-h-56 overflow-y-auto">
@@ -113,16 +114,16 @@ function ReturnCombobox({
                                 <button key={p.product_id} type="button" disabled={disabled}
                                     onClick={() => { if (!disabled) { onChange(p); setOpen(false); setSearch(''); } }}
                                     className={`w-full text-left px-3 py-2.5 flex items-center justify-between gap-3 transition-colors ${
-                                        value === p.product_id ? 'bg-purple-50' :
-                                        disabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-50'
+                                        value === p.product_id ? 'bg-purple-50 dark:bg-purple-950/50' :
+                                        disabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-accent'
                                     }`}>
-                                    <span className="font-medium text-slate-900 text-sm truncate">{p.product_name}</span>
+                                    <span className="font-medium text-foreground text-sm truncate">{p.product_name}</span>
                                     <span className="text-xs font-mono shrink-0 text-purple-600 font-semibold">
                                         {p.available} dispo.
                                     </span>
                                 </button>
                             );
-                        }) : <p className="px-3 py-4 text-sm text-center text-slate-400">Aucun produit retournable</p>}
+                        }) : <p className="px-3 py-4 text-sm text-center text-muted-foreground">Aucun produit retournable</p>}
                     </div>
                 </div>
             )}
@@ -143,7 +144,7 @@ export default function Return({ client, returnableProducts }: Props) {
     ];
 
     const [items, setItems] = useState<ReturnItem[]>([
-        { product_id: null, product_name: '', available: 0, unit_price: 0, quantity: 1 },
+        { product_id: null, product_name: '', available: 0, unit_price: 0, quantity: 1, return_type: 'stock' },
     ]);
     const [notes, setNotes] = useState('');
     const [processing, setProcessing] = useState(false);
@@ -156,6 +157,10 @@ export default function Return({ client, returnableProducts }: Props) {
         ));
     };
 
+    const updateReturnType = (index: number, type: 'stock' | 'damaged') => {
+        setItems(prev => prev.map((item, i) => i === index ? { ...item, return_type: type } : item));
+    };
+
     const updateQty = (index: number, qty: number) => {
         setItems(prev => prev.map((item, i) => {
             if (i !== index) return item;
@@ -163,7 +168,7 @@ export default function Return({ client, returnableProducts }: Props) {
         }));
     };
 
-    const addRow = () => setItems(prev => [...prev, { product_id: null, product_name: '', available: 0, unit_price: 0, quantity: 1 }]);
+    const addRow = () => setItems(prev => [...prev, { product_id: null, product_name: '', available: 0, unit_price: 0, quantity: 1, return_type: 'stock' }]);
     const removeRow = (index: number) => setItems(prev => prev.filter((_, i) => i !== index));
 
     const total = items.reduce((sum, i) => sum + i.quantity * i.unit_price, 0);
@@ -176,7 +181,7 @@ export default function Return({ client, returnableProducts }: Props) {
         if (anyEmpty || anyOver) return;
         setProcessing(true);
         router.post(`/clients/${client.uuid}/return`, {
-            items: items.map(({ product_id, quantity }) => ({ product_id, quantity })),
+            items: items.map(({ product_id, quantity, return_type }) => ({ product_id, quantity, return_type })),
             notes,
         }, { onFinish: () => setProcessing(false) });
     };
@@ -190,9 +195,9 @@ export default function Return({ client, returnableProducts }: Props) {
                         <Button variant="ghost" size="icon" className="rounded-xl" onClick={() => router.visit(`/clients/${client.uuid}`)}>
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
-                        <h1 className="text-xl font-bold text-slate-900">Retour — {client.nom}</h1>
+                        <h1 className="text-xl font-bold text-foreground">Retour — {client.nom}</h1>
                     </div>
-                    <div className="rounded-3xl border border-slate-200 bg-white shadow-sm flex flex-col items-center gap-3 py-20 text-slate-400">
+                    <div className="rounded-3xl border border-border bg-card shadow-sm flex flex-col items-center gap-3 py-20 text-muted-foreground">
                         <PackageX className="h-12 w-12 opacity-20" />
                         <p className="font-semibold text-lg">Aucun produit retournable</p>
                         <p className="text-sm">Ce client n'a encore rien acheté ou tout a déjà été retourné.</p>
@@ -218,48 +223,49 @@ export default function Return({ client, returnableProducts }: Props) {
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <div>
-                        <h1 className="text-xl font-bold text-slate-900">Enregistrer un retour</h1>
-                        <p className="text-sm text-slate-400">{client.nom}{client.telephone ? ` · ${client.telephone}` : ''}</p>
+                        <h1 className="text-xl font-bold text-foreground">Enregistrer un retour</h1>
+                        <p className="text-sm text-muted-foreground">{client.nom}{client.telephone ? ` · ${client.telephone}` : ''}</p>
                     </div>
                 </div>
 
                 {serverError && (
-                    <div className="flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                    <div className="flex items-center gap-2 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 px-4 py-3 text-sm text-red-700 dark:text-red-400">
                         <AlertTriangle className="h-4 w-4 shrink-0" />
                         {serverError}
                     </div>
                 )}
 
                 {anyOver && (
-                    <div className="flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                    <div className="flex items-center gap-2 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 px-4 py-3 text-sm text-red-700 dark:text-red-400">
                         <AlertTriangle className="h-4 w-4 shrink-0" />
                         Quantité demandée dépasse le maximum retournable pour un ou plusieurs produits.
                     </div>
                 )}
 
-                <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-xs text-amber-700 flex items-center gap-2">
-                    <PackageX className="h-4 w-4 shrink-0" />
-                    Les produits retournés seront transférés au stock endommagé — ils ne reviennent pas en stock vendable.
+                <div className="rounded-xl bg-muted/40 border border-border px-4 py-3 text-xs text-muted-foreground flex items-center gap-2">
+                    <PackageX className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    Choisissez le type de retour pour chaque produit : <strong className="text-emerald-700 dark:text-emerald-400 ml-1">En stock</strong> remet le produit en vente, <strong className="text-orange-600 dark:text-orange-400 ml-1">Endommagé</strong> l'envoie au stock endommagé.
                 </div>
 
-                <form onSubmit={handleSubmit} className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <form onSubmit={handleSubmit} className="rounded-3xl border border-border bg-card shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
-                            <thead className="bg-purple-50 text-xs font-bold uppercase text-slate-500 border-b border-purple-100">
+                            <thead className="bg-purple-50 dark:bg-purple-950/30 text-xs font-bold uppercase text-muted-foreground border-b border-purple-100 dark:border-purple-900/50">
                                 <tr>
                                     <th className="px-5 py-3 text-left">Produit</th>
                                     <th className="px-5 py-3 w-28 text-center">Max retournable</th>
                                     <th className="px-5 py-3 w-24 text-center">Qté</th>
+                                    <th className="px-5 py-3 w-44 text-center">Type de retour</th>
                                     <th className="px-5 py-3 w-32 text-right">Prix unit. moy.</th>
                                     <th className="px-5 py-3 w-32 text-right">Total</th>
                                     <th className="px-5 py-3 w-10" />
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-50">
+                            <tbody className="divide-y divide-border/50">
                                 {items.map((item, index) => {
                                     const overLimit = item.product_id !== null && item.quantity > item.available;
                                     return (
-                                        <tr key={index} className={overLimit ? 'bg-red-50' : 'hover:bg-slate-50/50'}>
+                                        <tr key={index} className={overLimit ? 'bg-red-50 dark:bg-red-950/20' : 'hover:bg-accent'}>
                                             <td className="px-5 py-2">
                                                 <ReturnCombobox
                                                     products={returnableProducts}
@@ -270,10 +276,10 @@ export default function Return({ client, returnableProducts }: Props) {
                                             </td>
                                             <td className="px-5 py-2 text-center">
                                                 {item.product_id ? (
-                                                    <span className="inline-block rounded-full px-2 py-0.5 text-xs font-bold font-mono bg-purple-100 text-purple-700">
+                                                    <span className="inline-block rounded-full px-2 py-0.5 text-xs font-bold font-mono bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-400">
                                                         {item.available}
                                                     </span>
-                                                ) : <span className="text-slate-300">—</span>}
+                                                ) : <span className="text-muted-foreground/50">—</span>}
                                             </td>
                                             <td className="px-5 py-2 text-center">
                                                 <div>
@@ -286,17 +292,36 @@ export default function Return({ client, returnableProducts }: Props) {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="px-5 py-2 text-right font-mono text-xs text-slate-600">
+                                            <td className="px-5 py-2 text-center">
+                                                <div className="inline-flex rounded-lg border border-border overflow-hidden text-xs font-semibold">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => updateReturnType(index, 'stock')}
+                                                        className={`px-3 py-1.5 transition-colors ${item.return_type === 'stock' ? 'bg-emerald-600 text-white' : 'bg-card text-muted-foreground hover:bg-accent'}`}
+                                                    >
+                                                        En stock
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => updateReturnType(index, 'damaged')}
+                                                        className={`px-3 py-1.5 border-l border-border transition-colors ${item.return_type === 'damaged' ? 'bg-orange-500 text-white' : 'bg-card text-muted-foreground hover:bg-accent'}`}
+                                                    >
+                                                        Endommagé
+                                                    </button>
+                                                </div>
+                                            </td>
+
+                                            <td className="px-5 py-2 text-right font-mono text-xs text-muted-foreground">
                                                 {item.unit_price ? fmt(item.unit_price) : '—'}
                                             </td>
-                                            <td className="px-5 py-2 text-right font-semibold font-mono text-xs text-purple-700">
+                                            <td className="px-5 py-2 text-right font-semibold font-mono text-xs text-purple-700 dark:text-purple-400">
                                                 {item.unit_price ? fmt(item.quantity * item.unit_price) : '—'}
                                             </td>
                                             <td className="px-5 py-2">
                                                 {items.length > 1 && (
                                                     <Button type="button" variant="ghost" size="icon"
                                                         onClick={() => removeRow(index)}
-                                                        className="text-red-400 hover:text-red-600 hover:bg-red-50">
+                                                        className="text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40">
                                                         <Trash2 className="w-4 h-4" />
                                                     </Button>
                                                 )}
@@ -307,7 +332,7 @@ export default function Return({ client, returnableProducts }: Props) {
 
                                 {items.length === 0 && (
                                     <tr>
-                                        <td colSpan={6} className="px-5 py-12 text-center text-slate-400">
+                                        <td colSpan={7} className="px-5 py-12 text-center text-muted-foreground">
                                             <RotateCcw className="w-8 h-8 mx-auto mb-2 opacity-30" />
                                             <p className="text-sm">Cliquez sur « Ajouter » pour commencer.</p>
                                         </td>
@@ -317,8 +342,8 @@ export default function Return({ client, returnableProducts }: Props) {
                         </table>
                     </div>
 
-                    <div className="border-t border-slate-100 px-5 py-4 space-y-4">
-                        <Button type="button" variant="outline" size="sm" className="rounded-xl border-purple-200 text-purple-700 hover:bg-purple-50"
+                    <div className="border-t border-border/60 px-5 py-4 space-y-4">
+                        <Button type="button" variant="outline" size="sm" className="rounded-xl border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40"
                             disabled={selectedIds.length >= returnableProducts.length}
                             onClick={addRow}>
                             <Plus className="w-3 h-3 mr-1" /> Ajouter un produit
@@ -326,18 +351,18 @@ export default function Return({ client, returnableProducts }: Props) {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                             <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Notes (optionnel)</label>
+                                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Notes (optionnel)</label>
                                 <textarea value={notes} onChange={e => setNotes(e.target.value)}
                                     rows={2} placeholder="Motif du retour, état des produits…"
-                                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-200" />
+                                    className="w-full rounded-xl border border-border bg-card text-foreground px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800" />
                             </div>
 
-                            <div className="bg-purple-50 rounded-2xl p-4 space-y-2">
-                                <div className="flex justify-between text-sm text-purple-600">
+                            <div className="bg-purple-50 dark:bg-purple-950/30 rounded-2xl p-4 space-y-2">
+                                <div className="flex justify-between text-sm text-purple-600 dark:text-purple-400">
                                     <span>Total remboursé</span>
                                     <span className="font-mono">{fmt(total)}</span>
                                 </div>
-                                <div className="flex justify-between font-bold text-purple-900 text-lg border-t border-purple-200 pt-2">
+                                <div className="flex justify-between font-bold text-purple-900 dark:text-purple-200 text-lg border-t border-purple-200 dark:border-purple-800 pt-2">
                                     <span>Total</span>
                                     <span className="font-mono">{fmt(total)}</span>
                                 </div>

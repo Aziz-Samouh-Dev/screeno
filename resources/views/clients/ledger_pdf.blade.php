@@ -65,11 +65,19 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 9px; color: #1a1a1a; bac
             @if(!empty($company['city'])){{ $company['city'] }}<br>@endif
             @if(!empty($company['phone']))Tél : {{ $company['phone'] }}<br>@endif
             @if(!empty($company['email'])){{ $company['email'] }}<br>@endif
+            @if(!empty($company['tax_id']))IF : {{ $company['tax_id'] }}
+                @if(!empty($company['ice'])) &nbsp;·&nbsp; ICE : {{ $company['ice'] }}@endif
+            @elseif(!empty($company['ice']))ICE : {{ $company['ice'] }}@endif
         </div>
     </td>
     <td style="width:45%; vertical-align:top; text-align:right">
         <div class="doc-label">GRAND LIVRE CLIENT</div>
         <div class="doc-sub">{{ $client->nom }}</div>
+        @if(!empty($dateFrom) || !empty($dateTo))
+        <div class="doc-meta" style="margin-top:4px; font-weight:700; color:#1e293b">
+            Période : {{ $dateFrom ?? '—' }} → {{ $dateTo ?? '—' }}
+        </div>
+        @endif
         <div class="doc-meta">Généré le {{ now()->format('d/m/Y H:i') }}</div>
     </td>
 </tr></table>

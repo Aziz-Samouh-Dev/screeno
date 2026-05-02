@@ -91,8 +91,8 @@ export default function Edit() {
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
                         <div>
-                            <h1 className="text-xl font-bold text-slate-900">Modifier le produit</h1>
-                            <p className="text-sm text-slate-400">Modifier {produit.nom}</p>
+                            <h1 className="text-xl font-bold text-foreground">Modifier le produit</h1>
+                            <p className="text-sm text-muted-foreground">Modifier {produit.nom}</p>
                         </div>
                     </div>
                     <Button variant="outline" className="rounded-xl" onClick={() => router.visit(`/produits/${produit.uuid}`)}>
@@ -106,27 +106,27 @@ export default function Edit() {
                     <div className="space-y-4">
 
                         {/* Image */}
-                        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                <Upload className="h-4 w-4 text-slate-400" /> Image du produit
+                        <div className="rounded-3xl border border-border bg-card p-5 shadow-sm">
+                            <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
+                                <Upload className="h-4 w-4 text-muted-foreground" /> Image du produit
                             </h3>
                             <Controller control={form.control} name="image" render={({ field: { onChange } }) => (
                                 <label className="cursor-pointer block">
-                                    <div className={`relative aspect-square rounded-2xl border-2 border-dashed overflow-hidden flex items-center justify-center transition-colors ${preview ? 'border-transparent' : 'border-slate-200 hover:border-slate-400 bg-slate-50'}`}>
+                                    <div className={`relative aspect-square rounded-2xl border-2 border-dashed overflow-hidden flex items-center justify-center transition-colors ${preview ? 'border-transparent' : 'border-border hover:border-muted-foreground/50 bg-muted/40'}`}>
                                         {preview ? (
                                             <>
                                                 <img src={preview} alt="Preview" className="w-full h-full object-cover" />
                                                 <button type="button"
-                                                    className="absolute top-2 right-2 rounded-full bg-white/90 p-1 shadow hover:bg-white"
+                                                    className="absolute top-2 right-2 rounded-full bg-card/90 p-1 shadow hover:bg-card"
                                                     onClick={e => { e.preventDefault(); setPreview(null); onChange(null); setRemoveImage(true); }}>
-                                                    <X className="h-4 w-4 text-slate-600" />
+                                                    <X className="h-4 w-4 text-muted-foreground" />
                                                 </button>
                                             </>
                                         ) : (
                                             <div className="text-center space-y-2 p-4">
-                                                <Upload className="h-8 w-8 text-slate-300 mx-auto" />
-                                                <p className="text-xs text-slate-400">Cliquez pour télécharger</p>
-                                                <p className="text-xs text-slate-300">PNG, JPG, WEBP</p>
+                                                <Upload className="h-8 w-8 text-muted-foreground/40 mx-auto" />
+                                                <p className="text-xs text-muted-foreground">Cliquez pour télécharger</p>
+                                                <p className="text-xs text-muted-foreground/60">PNG, JPG, WEBP</p>
                                             </div>
                                         )}
                                     </div>
@@ -139,33 +139,33 @@ export default function Edit() {
                         </div>
 
                         {/* SKU */}
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 flex items-center gap-3">
-                            <div className="rounded-lg bg-white p-2 shadow-sm">
-                                <Tag className="h-4 w-4 text-slate-400" />
+                        <div className="rounded-2xl border border-border bg-muted/40 p-4 flex items-center gap-3">
+                            <div className="rounded-lg bg-card p-2 shadow-sm">
+                                <Tag className="h-4 w-4 text-muted-foreground" />
                             </div>
                             <div>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">SKU</p>
-                                <p className="font-mono font-semibold text-slate-700">{produit.sku}</p>
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">SKU</p>
+                                <p className="font-mono font-semibold text-foreground/90">{produit.sku}</p>
                             </div>
                         </div>
 
                         {/* Margin */}
-                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-2">
-                            <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                                <TrendingUp className="h-4 w-4 text-slate-400" /> Aperçu marge
+                        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm space-y-2">
+                            <h3 className="font-bold text-foreground text-sm flex items-center gap-2">
+                                <TrendingUp className="h-4 w-4 text-muted-foreground" /> Aperçu marge
                             </h3>
                             <div className="space-y-1.5 text-xs">
                                 <div className="flex justify-between">
-                                    <span className="text-slate-400">Achat</span>
-                                    <span className="font-mono font-semibold">{Number(watchPurchase).toFixed(2)} MAD</span>
+                                    <span className="text-muted-foreground">Achat</span>
+                                    <span className="font-mono font-semibold text-foreground">{Number(watchPurchase).toFixed(2)} MAD</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-slate-400">Vente</span>
-                                    <span className="font-mono font-semibold">{Number(watchSale).toFixed(2)} MAD</span>
+                                    <span className="text-muted-foreground">Vente</span>
+                                    <span className="font-mono font-semibold text-foreground">{Number(watchSale).toFixed(2)} MAD</span>
                                 </div>
-                                <div className="border-t pt-1.5 flex justify-between">
-                                    <span className="font-bold text-slate-700">Marge</span>
-                                    <span className={`font-mono font-bold ${margin >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                <div className="border-t border-border pt-1.5 flex justify-between">
+                                    <span className="font-bold text-foreground/90">Marge</span>
+                                    <span className={`font-mono font-bold ${margin >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
                                         {margin >= 0 ? '+' : ''}{margin.toFixed(2)} MAD
                                         {Number(watchPurchase) > 0 && <span className="ml-1">({marginPct.toFixed(1)}%)</span>}
                                     </span>
@@ -178,36 +178,36 @@ export default function Edit() {
                     <div className="lg:col-span-2 space-y-4">
 
                         {/* Basic */}
-                        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
-                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                                <Package className="h-4 w-4 text-slate-400" /> Informations de base
+                        <div className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-5">
+                            <h3 className="font-bold text-foreground flex items-center gap-2">
+                                <Package className="h-4 w-4 text-muted-foreground" /> Informations de base
                             </h3>
                             <Controller control={form.control} name="nom" render={({ field, fieldState }) => (
                                 <Field className="flex flex-col gap-1.5" data-invalid={fieldState.invalid}>
-                                    <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wide">Nom du produit *</FieldLabel>
+                                    <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Nom du produit *</FieldLabel>
                                     <Input className="rounded-xl" {...field} />
                                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                                 </Field>
                             )} />
                             <Controller control={form.control} name="description" render={({ field }) => (
                                 <Field className="flex flex-col gap-1.5">
-                                    <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wide">Description</FieldLabel>
+                                    <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Description</FieldLabel>
                                     <Textarea className="rounded-xl resize-none h-24" {...field} />
                                 </Field>
                             )} />
                         </div>
 
                         {/* Pricing */}
-                        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
-                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                                <DollarSign className="h-4 w-4 text-slate-400" /> Prix
+                        <div className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-5">
+                            <h3 className="font-bold text-foreground flex items-center gap-2">
+                                <DollarSign className="h-4 w-4 text-muted-foreground" /> Prix
                             </h3>
                             <div className="grid grid-cols-2 gap-4">
                                 <Controller control={form.control} name="purchase_price" render={({ field, fieldState }) => (
                                     <Field className="flex flex-col gap-1.5" data-invalid={fieldState.invalid}>
-                                        <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wide">Prix d'achat</FieldLabel>
+                                        <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Prix d'achat</FieldLabel>
                                         <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">MAD</span>
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs font-bold">MAD</span>
                                             <Input type="number" step="0.01" min="0" className="rounded-xl pl-12" {...field} />
                                         </div>
                                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -215,9 +215,9 @@ export default function Edit() {
                                 )} />
                                 <Controller control={form.control} name="sale_price" render={({ field, fieldState }) => (
                                     <Field className="flex flex-col gap-1.5" data-invalid={fieldState.invalid}>
-                                        <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wide">Prix de vente</FieldLabel>
+                                        <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Prix de vente</FieldLabel>
                                         <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">MAD</span>
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs font-bold">MAD</span>
                                             <Input type="number" step="0.01" min="0" className="rounded-xl pl-12" {...field} />
                                         </div>
                                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -227,13 +227,13 @@ export default function Edit() {
                         </div>
 
                         {/* Stock */}
-                        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
-                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                                <BarChart3 className="h-4 w-4 text-slate-400" /> Stock
+                        <div className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-5">
+                            <h3 className="font-bold text-foreground flex items-center gap-2">
+                                <BarChart3 className="h-4 w-4 text-muted-foreground" /> Stock
                             </h3>
                             <Controller control={form.control} name="stock_quantity" render={({ field, fieldState }) => (
                                 <Field className="flex flex-col gap-1.5 max-w-xs" data-invalid={fieldState.invalid}>
-                                    <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wide">Stock Quantity</FieldLabel>
+                                    <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Stock Quantity</FieldLabel>
                                     <Input type="number" min="0" className="rounded-xl"
                                         value={field.value} onChange={e => field.onChange(Number(e.target.value))} />
                                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}

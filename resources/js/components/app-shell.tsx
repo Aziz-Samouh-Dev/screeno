@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { useSidebarTheme } from '@/hooks/use-sidebar-theme';
 
 type Props = {
     children: ReactNode;
@@ -9,6 +10,7 @@ type Props = {
 
 export function AppShell({ children, variant = 'header' }: Props) {
     const isOpen = usePage().props.sidebarOpen;
+    useSidebarTheme(); // applies stored theme to <html> on every page
 
     if (variant === 'header') {
         return (

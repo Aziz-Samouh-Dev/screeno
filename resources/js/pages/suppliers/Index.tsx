@@ -94,17 +94,17 @@ export default function Index() {
                 title={confirmState.title} description={confirmState.description}
                 onConfirm={confirmState.onConfirm} loading={processing} />
 
-            <div className="flex flex-col gap-6 p-6 bg-slate-50/50 min-h-full">
+            <div className="flex flex-col gap-6 p-6">
 
                 {/* ── Header ── */}
                 <div className="flex items-center justify-between flex-wrap gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-100">
-                            <Truck className="h-5 w-5 text-blue-600" />
+                        <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
+                            <Truck className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-slate-900">Fournisseurs</h1>
-                            <p className="text-sm text-slate-400 mt-0.5">Gérez vos partenaires fournisseurs</p>
+                            <h1 className="text-xl font-bold text-foreground">Fournisseurs</h1>
+                            <p className="text-sm text-muted-foreground mt-0.5">Gérez vos partenaires fournisseurs</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -122,67 +122,67 @@ export default function Index() {
 
                 {/* ── Stat cards ── */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                    <div className="bg-card rounded-xl border border-border shadow-sm p-5">
                         <div className="flex items-center justify-between mb-3">
-                            <div className="p-2 rounded-lg bg-slate-100">
-                                <Truck className="h-4 w-4 text-slate-600" />
+                            <div className="p-2 rounded-lg bg-muted">
+                                <Truck className="h-4 w-4 text-muted-foreground" />
                             </div>
                         </div>
-                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total fournisseurs</p>
-                        <p className="text-3xl font-bold text-slate-900 mt-1 leading-none">{total}</p>
-                        <p className="text-xs text-slate-400 mt-1.5">dans le registre</p>
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Total fournisseurs</p>
+                        <p className="text-3xl font-bold text-foreground mt-1 leading-none">{total}</p>
+                        <p className="text-xs text-muted-foreground mt-1.5">dans le registre</p>
                     </div>
 
-                    <div className="bg-white rounded-xl border border-emerald-100 shadow-sm p-5">
+                    <div className="bg-card rounded-xl border border-emerald-100 dark:border-emerald-900 shadow-sm p-5">
                         <div className="flex items-center justify-between mb-3">
-                            <div className="p-2 rounded-lg bg-emerald-50">
-                                <UserCheck className="h-4 w-4 text-emerald-600" />
+                            <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30">
+                                <UserCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                             </div>
-                            <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{activePct}%</span>
+                            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full">{activePct}%</span>
                         </div>
-                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Fournisseurs actifs</p>
-                        <p className="text-3xl font-bold text-emerald-700 mt-1 leading-none">{active}</p>
-                        <div className="mt-3 h-1.5 bg-emerald-100 rounded-full overflow-hidden">
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Fournisseurs actifs</p>
+                        <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-400 mt-1 leading-none">{active}</p>
+                        <div className="mt-3 h-1.5 bg-emerald-100 dark:bg-emerald-950/40 rounded-full overflow-hidden">
                             <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${activePct}%` }} />
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-xl border border-red-100 shadow-sm p-5">
+                    <div className="bg-card rounded-xl border border-red-100 dark:border-red-900 shadow-sm p-5">
                         <div className="flex items-center justify-between mb-3">
-                            <div className="p-2 rounded-lg bg-red-50">
-                                <UserX className="h-4 w-4 text-red-500" />
+                            <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/30">
+                                <UserX className="h-4 w-4 text-red-500 dark:text-red-400" />
                             </div>
-                            <span className="text-xs font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">{inactivePct}%</span>
+                            <span className="text-xs font-semibold text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-2 py-0.5 rounded-full">{inactivePct}%</span>
                         </div>
-                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Fournisseurs inactifs</p>
-                        <p className="text-3xl font-bold text-red-600 mt-1 leading-none">{inactive}</p>
-                        <div className="mt-3 h-1.5 bg-red-100 rounded-full overflow-hidden">
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Fournisseurs inactifs</p>
+                        <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-1 leading-none">{inactive}</p>
+                        <div className="mt-3 h-1.5 bg-red-100 dark:bg-red-950/40 rounded-full overflow-hidden">
                             <div className="h-full bg-red-400 rounded-full" style={{ width: `${inactivePct}%` }} />
                         </div>
                     </div>
                 </div>
 
                 {/* ── Table card ── */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
 
                     {/* Toolbar */}
-                    <div className="px-5 py-3.5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="px-5 py-3.5 border-b border-border/60 flex flex-col sm:flex-row sm:items-center gap-3">
                         <div className="relative flex-1 max-w-sm">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input placeholder="Rechercher nom, email ou téléphone…"
-                                className="pl-9 h-9 rounded-lg border-slate-200"
+                                className="pl-9 h-9 rounded-lg border-border"
                                 value={search} onChange={e => setSearch(e.target.value)} />
                             {search && (
                                 <button onClick={() => setSearch('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                                     <X className="h-3.5 w-3.5" />
                                 </button>
                             )}
                         </div>
-                        <div className="flex items-center gap-1.5 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-white">
-                            <SlidersHorizontal className="h-3.5 w-3.5 text-slate-400" />
+                        <div className="flex items-center gap-1.5 border border-border rounded-lg px-2.5 py-1.5 bg-card">
+                            <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
                             <Select value={status} onValueChange={setStatus}>
-                                <SelectTrigger className="border-0 p-0 h-auto text-xs font-medium text-slate-700 shadow-none focus:ring-0 w-32">
+                                <SelectTrigger className="border-0 p-0 h-auto text-xs font-medium text-foreground shadow-none focus:ring-0 w-32">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -192,7 +192,7 @@ export default function Index() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="sm:ml-auto text-xs text-slate-400 font-medium">
+                        <div className="sm:ml-auto text-xs text-muted-foreground font-medium">
                             {suppliers.total} fournisseur{Number(suppliers.total) !== 1 ? 's' : ''}
                         </div>
                     </div>
@@ -200,27 +200,27 @@ export default function Index() {
                     {/* Table */}
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm min-w-[640px]">
-                            <thead className="bg-slate-50 border-b border-slate-200">
+                            <thead className="bg-muted/40 border-b border-border/60">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider w-10">#</th>
-                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-10">#</th>
+                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                                         <SortBtn field="nom" label="Fournisseur" />
                                     </th>
-                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Téléphone</th>
-                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Ville</th>
-                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Téléphone</th>
+                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Ville</th>
+                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                                         <SortBtn field="status" label="Statut" />
                                     </th>
-                                    <th className="px-4 py-3 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                                    <th className="px-4 py-3 text-center text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-border/60">
                                 {suppliers.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="px-4 py-20 text-center">
                                             <div className="flex flex-col items-center gap-2">
-                                                <Truck className="h-12 w-12 text-slate-200" />
-                                                <p className="font-medium text-slate-400">Aucun fournisseur trouvé</p>
+                                                <Truck className="h-12 w-12 text-muted-foreground/20" />
+                                                <p className="font-medium text-muted-foreground">Aucun fournisseur trouvé</p>
                                                 {search
                                                     ? <button onClick={() => setSearch('')} className="text-xs text-indigo-500 hover:underline">Effacer la recherche</button>
                                                     : <Link href="/suppliers/create"><span className="text-xs text-indigo-500 hover:underline">Ajouter votre premier fournisseur →</span></Link>
@@ -232,48 +232,48 @@ export default function Index() {
                                     const rowNum = ((suppliers.current_page - 1) * Number(perPage)) + idx + 1;
                                     return (
                                         <tr key={s.uuid}
-                                            className="hover:bg-blue-50/30 transition-colors cursor-pointer group"
+                                            className="hover:bg-accent transition-colors cursor-pointer group"
                                             onClick={() => router.visit(`/suppliers/${s.uuid}`)}>
 
                                             <td className="px-4 py-3.5">
-                                                <span className="text-xs text-slate-300 font-mono group-hover:text-blue-300">{rowNum}</span>
+                                                <span className="text-xs text-muted-foreground/40 font-mono group-hover:text-blue-400 dark:group-hover:text-blue-500">{rowNum}</span>
                                             </td>
 
                                             <td className="px-4 py-3.5">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="h-8 w-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0">
+                                                    <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">
                                                         {initials(s.nom)}
                                                     </div>
                                                     <div>
-                                                        <p className="font-semibold text-slate-800 group-hover:text-blue-700 transition-colors text-sm">{s.nom}</p>
-                                                        <p className="text-xs text-slate-400">{s.email || '—'}</p>
+                                                        <p className="font-semibold text-foreground group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors text-sm">{s.nom}</p>
+                                                        <p className="text-xs text-muted-foreground">{s.email || '—'}</p>
                                                     </div>
                                                 </div>
                                             </td>
 
                                             <td className="px-4 py-3.5">
                                                 {s.telephone ? (
-                                                    <div className="flex items-center gap-1.5 text-slate-600 text-xs">
-                                                        <Phone className="h-3 w-3 text-slate-400" />
+                                                    <div className="flex items-center gap-1.5 text-foreground/70 text-xs">
+                                                        <Phone className="h-3 w-3 text-muted-foreground" />
                                                         {s.telephone}
                                                     </div>
-                                                ) : <span className="text-slate-300">—</span>}
+                                                ) : <span className="text-muted-foreground/40">—</span>}
                                             </td>
 
                                             <td className="px-4 py-3.5">
                                                 {s.ville ? (
-                                                    <div className="flex items-center gap-1.5 text-slate-600 text-xs">
-                                                        <MapPin className="h-3 w-3 text-slate-400" />
+                                                    <div className="flex items-center gap-1.5 text-foreground/70 text-xs">
+                                                        <MapPin className="h-3 w-3 text-muted-foreground" />
                                                         {s.ville}
                                                     </div>
-                                                ) : <span className="text-slate-300">—</span>}
+                                                ) : <span className="text-muted-foreground/40">—</span>}
                                             </td>
 
                                             <td className="px-4 py-3.5">
                                                 <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${
                                                     s.status === 'active'
-                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                        : 'bg-red-50 text-red-600 border-red-200'
+                                                        ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                                                        : 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800'
                                                 }`}>
                                                     <span className={`h-1.5 w-1.5 rounded-full ${s.status === 'active' ? 'bg-emerald-500' : 'bg-red-400'}`} />
                                                     {s.status === 'active' ? 'Actif' : 'Inactif'}
@@ -284,17 +284,17 @@ export default function Index() {
                                                 <div className="flex items-center justify-center gap-1">
                                                     <button title="Voir"
                                                         onClick={() => router.visit(`/suppliers/${s.uuid}`)}
-                                                        className="h-7 w-7 rounded-lg hover:bg-slate-100 text-slate-500 flex items-center justify-center transition-colors">
+                                                        className="h-7 w-7 rounded-lg hover:bg-accent text-muted-foreground flex items-center justify-center transition-colors">
                                                         <Eye className="h-3.5 w-3.5" />
                                                     </button>
                                                     <button title="Modifier"
                                                         onClick={() => router.visit(`/suppliers/${s.uuid}/edit`)}
-                                                        className="h-7 w-7 rounded-lg hover:bg-slate-100 text-slate-500 flex items-center justify-center transition-colors">
+                                                        className="h-7 w-7 rounded-lg hover:bg-accent text-muted-foreground flex items-center justify-center transition-colors">
                                                         <Pencil className="h-3.5 w-3.5" />
                                                     </button>
                                                     <button title="Supprimer"
                                                         onClick={() => handleDelete(s.uuid, s.nom)}
-                                                        className="h-7 w-7 rounded-lg hover:bg-red-50 text-red-400 flex items-center justify-center transition-colors">
+                                                        className="h-7 w-7 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-red-400 flex items-center justify-center transition-colors">
                                                         <Trash2 className="h-3.5 w-3.5" />
                                                     </button>
                                                 </div>
@@ -307,22 +307,22 @@ export default function Index() {
                     </div>
 
                     {/* Pagination */}
-                    <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <p className="text-xs text-slate-500">
+                    <div className="px-5 py-3.5 border-t border-border/60 bg-muted/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <p className="text-xs text-muted-foreground">
                             {suppliers.data.length > 0
                                 ? `Affichage de ${from} à ${to} sur ${suppliers.total} fournisseurs`
                                 : '0 fournisseur'}
                         </p>
                         <div className="flex items-center gap-3">
                             <div className="flex items-center gap-1.5">
-                                <span className="text-xs text-slate-400">Lignes</span>
+                                <span className="text-xs text-muted-foreground">Lignes</span>
                                 <Select value={perPage} onValueChange={v => { setPerPage(v); go({ per_page: v, page: 1 }); }}>
-                                    <SelectTrigger className="h-7 w-16 text-xs rounded-lg border-slate-200 bg-white"><SelectValue /></SelectTrigger>
+                                    <SelectTrigger className="h-7 w-16 text-xs rounded-lg border-border bg-card"><SelectValue /></SelectTrigger>
                                     <SelectContent>{['5','10','25','50'].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
                                 </Select>
                             </div>
-                            <span className="text-xs text-slate-500">
-                                Page <span className="font-semibold text-slate-700">{suppliers.current_page}</span> / <span className="font-semibold text-slate-700">{suppliers.last_page}</span>
+                            <span className="text-xs text-muted-foreground">
+                                Page <span className="font-semibold text-foreground">{suppliers.current_page}</span> / <span className="font-semibold text-foreground">{suppliers.last_page}</span>
                             </span>
                             <div className="flex gap-1">
                                 <Button variant="outline" size="icon" className="h-7 w-7 rounded-lg"

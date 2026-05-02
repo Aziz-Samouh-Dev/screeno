@@ -48,7 +48,7 @@ function DonutChart({ active, inactive }: { active: number; inactive: number }) 
             <circle cx={cx} cy={cy} r={r} fill="none" stroke="#10b981" strokeWidth={sw}
                 strokeDasharray={`${pct * circ} ${circ}`} strokeDashoffset={circ / 4}
                 strokeLinecap="round" />
-            <text x={cx} y={cy + 4} textAnchor="middle" fontSize="10" fontWeight="700" fill="#0f172a">
+            <text x={cx} y={cy + 4} textAnchor="middle" fontSize="10" fontWeight="700" fill="currentColor" className="fill-foreground">
                 {Math.round(pct * 100)}%
             </text>
         </svg>
@@ -137,34 +137,34 @@ export default function Index() {
             {paymentModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
                     onClick={() => setPaymentModal(null)}>
-                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6 space-y-4"
+                    <div className="bg-card rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6 space-y-4"
                         onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <div className="p-2 rounded-lg bg-emerald-50">
+                                <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40">
                                     <CreditCard className="h-4 w-4 text-emerald-600" />
                                 </div>
                                 <div>
-                                    <h2 className="font-bold text-slate-900 text-sm">Enregistrer un paiement</h2>
-                                    <p className="text-xs text-slate-400">{paymentModal.nom}</p>
+                                    <h2 className="font-bold text-foreground text-sm">Enregistrer un paiement</h2>
+                                    <p className="text-xs text-muted-foreground">{paymentModal.nom}</p>
                                 </div>
                             </div>
-                            <button onClick={() => setPaymentModal(null)} className="rounded-lg p-1.5 hover:bg-slate-100">
-                                <X className="h-4 w-4 text-slate-400" />
+                            <button onClick={() => setPaymentModal(null)} className="rounded-lg p-1.5 hover:bg-accent">
+                                <X className="h-4 w-4 text-muted-foreground" />
                             </button>
                         </div>
                         <div className="space-y-3">
                             <div>
-                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Montant *</label>
+                                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Montant *</label>
                                 <Input type="number" step="0.01" min="0.01" placeholder="0.00"
                                     value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)}
                                     className="h-10 rounded-lg text-right font-mono" autoFocus />
                             </div>
                             <div>
-                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Notes (optionnel)</label>
+                                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Notes (optionnel)</label>
                                 <textarea value={paymentNotes} onChange={e => setPaymentNotes(e.target.value)}
                                     rows={2} placeholder="Référence, mode de paiement…"
-                                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-200" />
+                                    className="w-full rounded-lg border border-border bg-card text-foreground px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-200" />
                             </div>
                         </div>
                         <div className="flex gap-2 pt-1">
@@ -183,17 +183,17 @@ export default function Index() {
                 title={confirmState.title} description={confirmState.description}
                 onConfirm={confirmState.onConfirm} loading={processing} />
 
-            <div className="flex flex-col gap-6 p-6 bg-slate-50/50 min-h-full">
+            <div className="flex flex-col gap-6 p-6">
 
                 {/* ── Header ── */}
                 <div className="flex items-center justify-between flex-wrap gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-indigo-50 border border-indigo-100">
+                        <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60">
                             <Users className="h-5 w-5 text-indigo-600" />
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-slate-900">Clients</h1>
-                            <p className="text-sm text-slate-400 mt-0.5">Gérez votre portefeuille clients</p>
+                            <h1 className="text-xl font-bold text-foreground">Clients</h1>
+                            <p className="text-sm text-muted-foreground mt-0.5">Gérez votre portefeuille clients</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -211,38 +211,38 @@ export default function Index() {
 
                 {/* ── Stat cards ── */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
+                    <div className="bg-card rounded-xl border border-border shadow-sm p-5 flex items-center gap-4">
                         <div className="flex-1">
-                            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total clients</p>
-                            <p className="text-3xl font-bold text-slate-900 mt-1 leading-none">{total}</p>
-                            <p className="text-xs text-slate-400 mt-1.5">portefeuille complet</p>
+                            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Total clients</p>
+                            <p className="text-3xl font-bold text-foreground mt-1 leading-none">{total}</p>
+                            <p className="text-xs text-muted-foreground mt-1.5">portefeuille complet</p>
                         </div>
                         <DonutChart active={active} inactive={inactive} />
                     </div>
 
-                    <div className="bg-white rounded-xl border border-emerald-100 shadow-sm p-5">
+                    <div className="bg-card rounded-xl border border-emerald-100 dark:border-emerald-900/60 shadow-sm p-5">
                         <div className="flex items-center justify-between mb-3">
-                            <div className="p-2 rounded-lg bg-emerald-50">
+                            <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40">
                                 <UserCheck className="h-4 w-4 text-emerald-600" />
                             </div>
-                            <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{activePct}%</span>
+                            <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full">{activePct}%</span>
                         </div>
-                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Clients actifs</p>
-                        <p className="text-3xl font-bold text-emerald-700 mt-1 leading-none">{active}</p>
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Clients actifs</p>
+                        <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-400 mt-1 leading-none">{active}</p>
                         <div className="mt-3 h-1.5 bg-emerald-100 rounded-full overflow-hidden">
                             <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${activePct}%` }} />
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-xl border border-red-100 shadow-sm p-5">
+                    <div className="bg-card rounded-xl border border-red-100 dark:border-red-900/60 shadow-sm p-5">
                         <div className="flex items-center justify-between mb-3">
-                            <div className="p-2 rounded-lg bg-red-50">
+                            <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/40">
                                 <UserX className="h-4 w-4 text-red-500" />
                             </div>
-                            <span className="text-xs font-semibold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">{inactivePct}%</span>
+                            <span className="text-xs font-semibold text-red-500 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded-full">{inactivePct}%</span>
                         </div>
-                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Clients inactifs</p>
-                        <p className="text-3xl font-bold text-red-600 mt-1 leading-none">{inactive}</p>
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Clients inactifs</p>
+                        <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-1 leading-none">{inactive}</p>
                         <div className="mt-3 h-1.5 bg-red-100 rounded-full overflow-hidden">
                             <div className="h-full bg-red-400 rounded-full transition-all" style={{ width: `${inactivePct}%` }} />
                         </div>
@@ -250,27 +250,27 @@ export default function Index() {
                 </div>
 
                 {/* ── Table card ── */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
 
                     {/* Toolbar */}
-                    <div className="px-5 py-3.5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="px-5 py-3.5 border-b border-border/60 flex flex-col sm:flex-row sm:items-center gap-3">
                         <div className="relative flex-1 max-w-sm">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input placeholder="Rechercher nom, email ou téléphone…"
-                                className="pl-9 h-9 rounded-lg border-slate-200"
+                                className="pl-9 h-9 rounded-lg border-border"
                                 value={search} onChange={e => setSearch(e.target.value)} />
                             {search && (
                                 <button onClick={() => setSearch('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground/90">
                                     <X className="h-3.5 w-3.5" />
                                 </button>
                             )}
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-1.5 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-white">
-                                <SlidersHorizontal className="h-3.5 w-3.5 text-slate-400" />
+                            <div className="flex items-center gap-1.5 border border-border rounded-lg px-2.5 py-1.5 bg-card">
+                                <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
                                 <Select value={status} onValueChange={setStatus}>
-                                    <SelectTrigger className="border-0 p-0 h-auto text-xs font-medium text-slate-700 shadow-none focus:ring-0 w-32">
+                                    <SelectTrigger className="border-0 p-0 h-auto text-xs font-medium text-foreground/90 shadow-none focus:ring-0 w-32">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -281,7 +281,7 @@ export default function Index() {
                                 </Select>
                             </div>
                         </div>
-                        <div className="sm:ml-auto text-xs text-slate-400 font-medium">
+                        <div className="sm:ml-auto text-xs text-muted-foreground font-medium">
                             {clients.total} client{Number(clients.total) !== 1 ? 's' : ''}
                         </div>
                     </div>
@@ -289,29 +289,29 @@ export default function Index() {
                     {/* Table */}
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm min-w-[700px]">
-                            <thead className="bg-slate-50 border-b border-slate-200">
+                            <thead className="bg-muted/40 border-b border-border/60">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider w-10">#</th>
-                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-10">#</th>
+                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                                         <SortBtn field="name" label="Client" />
                                     </th>
-                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Téléphone</th>
-                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Téléphone</th>
+                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                                         <SortBtn field="city" label="Ville" />
                                     </th>
-                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                                         <SortBtn field="status" label="Statut" />
                                     </th>
-                                    <th className="px-4 py-3 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                                    <th className="px-4 py-3 text-center text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-border/60">
                                 {clients.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="px-4 py-20 text-center">
-                                            <div className="flex flex-col items-center gap-2 text-slate-300">
+                                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
                                                 <Users className="h-12 w-12 opacity-30" />
-                                                <p className="font-medium text-slate-400">Aucun client trouvé</p>
+                                                <p className="font-medium text-muted-foreground">Aucun client trouvé</p>
                                                 {search
                                                     ? <button onClick={() => setSearch('')} className="text-xs text-indigo-500 hover:underline">Effacer la recherche</button>
                                                     : <Link href="/clients/create"><span className="text-xs text-indigo-500 hover:underline">Ajouter votre premier client →</span></Link>
@@ -323,11 +323,11 @@ export default function Index() {
                                     const rowNum = ((clients.current_page - 1) * Number(perPage)) + idx + 1;
                                     return (
                                         <tr key={c.uuid}
-                                            className="hover:bg-indigo-50/30 transition-colors cursor-pointer group"
+                                            className="hover:bg-indigo-50/30 dark:hover:bg-indigo-950/30 transition-colors cursor-pointer group"
                                             onClick={() => router.visit(`/clients/${c.uuid}`)}>
 
                                             <td className="px-4 py-3.5">
-                                                <span className="text-xs text-slate-300 font-mono group-hover:text-indigo-300">{rowNum}</span>
+                                                <span className="text-xs text-muted-foreground/50 font-mono group-hover:text-indigo-300">{rowNum}</span>
                                             </td>
 
                                             <td className="px-4 py-3.5">
@@ -336,20 +336,20 @@ export default function Index() {
                                                         {initials(c.nom)}
                                                     </div>
                                                     <div>
-                                                        <p className="font-semibold text-slate-800 group-hover:text-indigo-700 transition-colors text-sm">{c.nom}</p>
-                                                        <p className="text-xs text-slate-400">{c.email || '—'}</p>
+                                                        <p className="font-semibold text-foreground group-hover:text-indigo-700 dark:group-hover:text-indigo-400 transition-colors text-sm">{c.nom}</p>
+                                                        <p className="text-xs text-muted-foreground">{c.email || '—'}</p>
                                                     </div>
                                                 </div>
                                             </td>
 
-                                            <td className="px-4 py-3.5 text-slate-500 font-mono text-xs">{c.telephone || '—'}</td>
-                                            <td className="px-4 py-3.5 text-slate-600 text-xs">{c.ville || '—'}</td>
+                                            <td className="px-4 py-3.5 text-muted-foreground font-mono text-xs">{c.telephone || '—'}</td>
+                                            <td className="px-4 py-3.5 text-muted-foreground text-xs">{c.ville || '—'}</td>
 
                                             <td className="px-4 py-3.5">
                                                 <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${
                                                     c.status === 'active'
-                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                        : 'bg-red-50 text-red-600 border-red-200'
+                                                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/60'
+                                                        : 'bg-red-50 dark:bg-red-950/40 text-red-600 border-red-200 dark:border-red-900/60'
                                                 }`}>
                                                     <span className={`h-1.5 w-1.5 rounded-full ${c.status === 'active' ? 'bg-emerald-500' : 'bg-red-400'}`} />
                                                     {c.status === 'active' ? 'Actif' : 'Inactif'}
@@ -375,18 +375,18 @@ export default function Index() {
                                                     </button>
                                                     <button title="Grand livre"
                                                         onClick={() => router.visit(`/clients/${c.uuid}/ledger`)}
-                                                        className="h-7 w-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors">
+                                                        className="h-7 w-7 rounded-lg bg-muted hover:bg-accent text-muted-foreground flex items-center justify-center transition-colors">
                                                         <BookOpen className="h-3.5 w-3.5" />
                                                     </button>
-                                                    <div className="w-px h-4 bg-slate-200 mx-0.5" />
+                                                    <div className="w-px h-4 bg-border mx-0.5" />
                                                     <button title="Modifier"
                                                         onClick={() => router.visit(`/clients/${c.uuid}/edit`)}
-                                                        className="h-7 w-7 rounded-lg hover:bg-slate-100 text-slate-500 flex items-center justify-center transition-colors">
+                                                        className="h-7 w-7 rounded-lg hover:bg-accent text-muted-foreground flex items-center justify-center transition-colors">
                                                         <Pencil className="h-3.5 w-3.5" />
                                                     </button>
                                                     <button title="Supprimer"
                                                         onClick={() => handleDelete(c.uuid, c.nom)}
-                                                        className="h-7 w-7 rounded-lg hover:bg-red-50 text-red-400 flex items-center justify-center transition-colors">
+                                                        className="h-7 w-7 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-red-400 flex items-center justify-center transition-colors">
                                                         <Trash2 className="h-3.5 w-3.5" />
                                                     </button>
                                                 </div>
@@ -399,22 +399,22 @@ export default function Index() {
                     </div>
 
                     {/* Pagination */}
-                    <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <p className="text-xs text-slate-500">
+                    <div className="px-5 py-3.5 border-t border-border/60 bg-muted/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <p className="text-xs text-muted-foreground">
                             {clients.data.length > 0
                                 ? `Affichage de ${from} à ${to} sur ${clients.total} clients`
                                 : '0 client'}
                         </p>
                         <div className="flex items-center gap-3">
                             <div className="flex items-center gap-1.5">
-                                <span className="text-xs text-slate-400">Lignes</span>
+                                <span className="text-xs text-muted-foreground">Lignes</span>
                                 <Select value={perPage} onValueChange={v => { setPerPage(v); go({ per_page: v, page: 1 }); }}>
-                                    <SelectTrigger className="h-7 w-16 text-xs rounded-lg border-slate-200 bg-white"><SelectValue /></SelectTrigger>
+                                    <SelectTrigger className="h-7 w-16 text-xs rounded-lg border-border bg-card"><SelectValue /></SelectTrigger>
                                     <SelectContent>{['5','10','25','50'].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
                                 </Select>
                             </div>
-                            <span className="text-xs text-slate-500">
-                                Page <span className="font-semibold text-slate-700">{clients.current_page}</span> / <span className="font-semibold text-slate-700">{clients.last_page}</span>
+                            <span className="text-xs text-muted-foreground">
+                                Page <span className="font-semibold text-foreground/90">{clients.current_page}</span> / <span className="font-semibold text-foreground/90">{clients.last_page}</span>
                             </span>
                             <div className="flex gap-1">
                                 <Button variant="outline" size="icon" className="h-7 w-7 rounded-lg"

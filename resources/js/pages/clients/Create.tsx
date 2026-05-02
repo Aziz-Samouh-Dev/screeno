@@ -61,8 +61,8 @@ export default function Create() {
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <div>
-                        <h1 className="text-xl font-bold text-slate-900">Nouveau client</h1>
-                        <p className="text-sm text-slate-400">Ajouter un nouveau client à votre CRM</p>
+                        <h1 className="text-xl font-bold text-foreground">Nouveau client</h1>
+                        <p className="text-sm text-muted-foreground">Ajouter un nouveau client à votre CRM</p>
                     </div>
                 </div>
 
@@ -71,25 +71,25 @@ export default function Create() {
                     {/* SIDEBAR */}
                     <div className="space-y-4">
                         {/* Avatar preview */}
-                        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm flex flex-col items-center gap-3">
-                            <div className="h-20 w-20 rounded-3xl bg-violet-100 text-violet-700 flex items-center justify-center text-2xl font-bold">
+                        <div className="rounded-3xl border border-border bg-card p-6 shadow-sm flex flex-col items-center gap-3">
+                            <div className="h-20 w-20 rounded-3xl bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-400 flex items-center justify-center text-2xl font-bold">
                                 {watchedNom ? getInitials(watchedNom) : <User className="h-8 w-8 opacity-40" />}
                             </div>
                             <div className="text-center">
-                                <p className="font-bold text-slate-800">{watchedNom || 'Client Name'}</p>
-                                <p className="text-xs text-slate-400 mt-0.5">{form.watch('email') || 'email@example.com'}</p>
+                                <p className="font-bold text-foreground">{watchedNom || 'Client Name'}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">{form.watch('email') || 'email@example.com'}</p>
                             </div>
                             <span className={`rounded-full px-3 py-1 text-xs font-semibold border ${
                                 form.watch('status') === 'active'
-                                    ? 'bg-green-50 text-green-700 border-green-200'
-                                    : 'bg-red-50 text-red-600 border-red-200'
+                                    ? 'bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900/60'
+                                    : 'bg-red-50 dark:bg-red-950/40 text-red-600 border-red-200 dark:border-red-900/60'
                             }`}>
                                 {form.watch('status')}
                             </span>
                         </div>
 
                         {/* Tips */}
-                        <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-xs text-blue-700 space-y-2">
+                        <div className="rounded-2xl border border-blue-100 dark:border-blue-900/60 bg-blue-50 dark:bg-blue-950/40 p-4 text-xs text-blue-700 dark:text-blue-400 space-y-2">
                             <p className="font-bold">Conseils</p>
                             <p>• Le nom et le téléphone sont obligatoires.</p>
                             <p>• L'e-mail doit être unique parmi les clients.</p>
@@ -101,16 +101,16 @@ export default function Create() {
                     <div className="lg:col-span-2 space-y-4">
 
                         {/* Basic Info */}
-                        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
+                        <div className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-5">
                             <div className="flex items-center gap-2 mb-1">
-                                <User className="h-4 w-4 text-slate-400" />
-                                <h3 className="font-bold text-slate-800">Informations de base</h3>
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                <h3 className="font-bold text-foreground">Informations de base</h3>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <Controller control={form.control} name="nom" render={({ field, fieldState }) => (
                                     <Field className="flex flex-col gap-1.5" data-invalid={fieldState.invalid}>
-                                        <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wide">Nom complet *</FieldLabel>
+                                        <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Nom complet *</FieldLabel>
                                         <Input placeholder="e.g. John Doe" className="rounded-xl" {...field} />
                                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                                         {serverErrors.nom && <p className="text-xs text-red-500">{serverErrors.nom}</p>}
@@ -119,7 +119,7 @@ export default function Create() {
 
                                 <Controller control={form.control} name="status" render={({ field }) => (
                                     <Field className="flex flex-col gap-1.5">
-                                        <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wide">Statut</FieldLabel>
+                                        <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Statut</FieldLabel>
                                         <Select value={field.value} onValueChange={field.onChange}>
                                             <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
                                             <SelectContent>
@@ -133,16 +133,16 @@ export default function Create() {
                         </div>
 
                         {/* Contact */}
-                        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
+                        <div className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-5">
                             <div className="flex items-center gap-2 mb-1">
-                                <Mail className="h-4 w-4 text-slate-400" />
-                                <h3 className="font-bold text-slate-800">Coordonnées</h3>
+                                <Mail className="h-4 w-4 text-muted-foreground" />
+                                <h3 className="font-bold text-foreground">Coordonnées</h3>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <Controller control={form.control} name="email" render={({ field, fieldState }) => (
                                     <Field className="flex flex-col gap-1.5" data-invalid={fieldState.invalid}>
-                                        <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wide">Email</FieldLabel>
+                                        <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Email</FieldLabel>
                                         <Input type="email" placeholder="client@email.com" className="rounded-xl" {...field} />
                                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                                         {serverErrors.email && <p className="text-xs text-red-500">{serverErrors.email}</p>}
@@ -151,7 +151,7 @@ export default function Create() {
 
                                 <Controller control={form.control} name="telephone" render={({ field, fieldState }) => (
                                     <Field className="flex flex-col gap-1.5" data-invalid={fieldState.invalid}>
-                                        <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wide">Téléphone *</FieldLabel>
+                                        <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Téléphone *</FieldLabel>
                                         <Input type="tel" placeholder="0600000000" className="rounded-xl" {...field}
                                             onInput={(e: React.FormEvent<HTMLInputElement>) => {
                                                 const t = e.target as HTMLInputElement;
@@ -166,23 +166,23 @@ export default function Create() {
                         </div>
 
                         {/* Location */}
-                        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
+                        <div className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-5">
                             <div className="flex items-center gap-2 mb-1">
-                                <MapPin className="h-4 w-4 text-slate-400" />
-                                <h3 className="font-bold text-slate-800">Localisation</h3>
+                                <MapPin className="h-4 w-4 text-muted-foreground" />
+                                <h3 className="font-bold text-foreground">Localisation</h3>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <Controller control={form.control} name="ville" render={({ field }) => (
                                     <Field className="flex flex-col gap-1.5">
-                                        <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wide">Ville</FieldLabel>
+                                        <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Ville</FieldLabel>
                                         <Input placeholder="Casablanca" className="rounded-xl" {...field} />
                                     </Field>
                                 )} />
 
                                 <Controller control={form.control} name="adresse" render={({ field }) => (
                                     <Field className="sm:col-span-1 flex flex-col gap-1.5">
-                                        <FieldLabel className="text-xs font-bold text-slate-500 uppercase tracking-wide">Adresse</FieldLabel>
+                                        <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Adresse</FieldLabel>
                                         <Input placeholder="Street, building…" className="rounded-xl" {...field} />
                                     </Field>
                                 )} />
@@ -190,10 +190,10 @@ export default function Create() {
                         </div>
 
                         {/* Notes */}
-                        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+                        <div className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-4">
                             <div className="flex items-center gap-2 mb-1">
-                                <FileText className="h-4 w-4 text-slate-400" />
-                                <h3 className="font-bold text-slate-800">Notes</h3>
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                <h3 className="font-bold text-foreground">Notes</h3>
                             </div>
                             <Controller control={form.control} name="notes" render={({ field }) => (
                                 <Textarea

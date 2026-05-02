@@ -32,20 +32,4 @@ class Supplier extends Model
         return 'uuid';
     }
 
-    public function purchaseInvoices()
-    {
-        return $this->hasMany(PurchaseInvoice::class);
-    }
-
-    public function payments()
-    {
-        return $this->hasManyThrough(
-            Payment::class,
-            PurchaseInvoice::class,
-            'supplier_id',          // Foreign key on purchase_invoices
-            'purchase_invoice_id',  // Foreign key on payments
-            'id',                   // Local key on suppliers
-            'id'                    // Local key on purchase_invoices
-        );
-    }
 }

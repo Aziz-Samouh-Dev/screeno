@@ -1,8 +1,10 @@
 import { Head, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
+import SettingsLayout from '@/layouts/settings/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,7 +13,7 @@ import { Building2, MapPin, Phone, Mail, Hash, Save } from 'lucide-react';
 import type { BreadcrumbItem } from '@/types';
 
 const schema = z.object({
-    name:    z.string().min(1, 'Company name is required'),
+    name:    z.string().min(1, 'Le nom est requis'),
     address: z.string().optional(),
     city:    z.string().optional(),
     country: z.string().optional(),
@@ -25,14 +27,14 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Settings', href: '/settings/profile' },
-    { title: 'Company Profile', href: '/settings/company' },
+    { title: 'Paramètres', href: '/settings/profile' },
+    { title: "Profil d'entreprise", href: '/settings/company' },
 ];
 
 export default function CompanyPage() {
     const { company } = usePage().props as any;
 
-    const form = useForm<FormValues>({
+    const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({
         resolver: zodResolver(schema) as any,
         defaultValues: {
             name:    company?.name    ?? '',
@@ -47,115 +49,109 @@ export default function CompanyPage() {
         },
     });
 
-    const { register, handleSubmit, formState: { errors, isSubmitting } } = form;
-
     function onSubmit(values: FormValues) {
         router.put('/settings/company', values);
     }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Company Profile" />
+            <Head title="Profil d'entreprise" />
+            <SettingsLayout>
+                <div className="space-y-6">
+                    <div>
+                        <h2 className="text-lg font-semibold">Profil d'entreprise</h2>
+                        <p className="text-sm text-muted-foreground">Ces données apparaissent sur tous les documents imprimés.</p>
+                    </div>
 
-            <div className="flex flex-col gap-6 p-6 max-w-3xl">
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
-                <div>
-                    <h1 className="text-xl font-bold text-slate-900">Company Profile</h1>
-                    <p className="text-sm text-slate-400 mt-0.5">This data appears on all printed invoices.</p>
+                        {/* Identity */}
+                        <div className="rounded-lg border bg-card p-5 space-y-4">
+                            <h3 className="font-semibold text-sm flex items-center gap-2">
+                                <Building2 className="h-4 w-4 text-muted-foreground" /> Identité
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="sm:col-span-2 space-y-2">
+                                    <Label>Nom de l'entreprise *</Label>
+                                    <Input {...register('name')} placeholder="Screeno SARL" />
+                                    {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Identifiant fiscal (IF / RC)</Label>
+                                    <div className="relative">
+                                        <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input {...register('tax_id')} className="pl-9" placeholder="123456789" />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>ICE</Label>
+                                    <div className="relative">
+                                        <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input {...register('ice')} className="pl-9" placeholder="000000000000000" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Contact */}
+                        <div className="rounded-lg border bg-card p-5 space-y-4">
+                            <h3 className="font-semibold text-sm flex items-center gap-2">
+                                <Phone className="h-4 w-4 text-muted-foreground" /> Contact
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Téléphone</Label>
+                                    <div className="relative">
+                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input {...register('phone')} className="pl-9" placeholder="+212 6xx xxx xxx" />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Email</Label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input {...register('email')} type="email" className="pl-9" placeholder="contact@company.ma" />
+                                    </div>
+                                    {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Address */}
+                        <div className="rounded-lg border bg-card p-5 space-y-4">
+                            <h3 className="font-semibold text-sm flex items-center gap-2">
+                                <MapPin className="h-4 w-4 text-muted-foreground" /> Adresse
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="sm:col-span-2 space-y-2">
+                                    <Label>Rue</Label>
+                                    <Input {...register('address')} placeholder="123 Avenue Hassan II" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Ville</Label>
+                                    <Input {...register('city')} placeholder="Casablanca" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Pays</Label>
+                                    <Input {...register('country')} placeholder="Maroc" />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Notes */}
+                        <div className="rounded-lg border bg-card p-5 space-y-3">
+                            <Label>Notes (apparaît sur les documents)</Label>
+                            <Textarea {...register('notes')} className="resize-none h-24" placeholder="Conditions de paiement, coordonnées bancaires, etc." />
+                        </div>
+
+                        <div className="flex justify-end">
+                            <Button type="submit" disabled={isSubmitting}>
+                                <Save className="mr-2 h-4 w-4" /> Enregistrer
+                            </Button>
+                        </div>
+                    </form>
                 </div>
-
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-
-                    {/* Identity */}
-                    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-                        <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                            <Building2 className="h-4 w-4 text-slate-400" /> Company Identity
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="sm:col-span-2 flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Company Name *</label>
-                                <Input {...register('name')} className="rounded-xl" placeholder="Screeno Inc." />
-                                {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
-                            </div>
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Tax ID (IF / RC)</label>
-                                <div className="relative">
-                                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                    <Input {...register('tax_id')} className="rounded-xl pl-9" placeholder="123456789" />
-                                </div>
-                            </div>
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">ICE</label>
-                                <div className="relative">
-                                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                    <Input {...register('ice')} className="rounded-xl pl-9" placeholder="000000000000000" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Contact */}
-                    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-                        <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-slate-400" /> Contact
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Phone</label>
-                                <div className="relative">
-                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                    <Input {...register('phone')} className="rounded-xl pl-9" placeholder="+212 6xx xxx xxx" />
-                                </div>
-                            </div>
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Email</label>
-                                <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                    <Input {...register('email')} type="email" className="rounded-xl pl-9" placeholder="contact@company.ma" />
-                                </div>
-                                {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Address */}
-                    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-                        <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                            <MapPin className="h-4 w-4 text-slate-400" /> Address
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="sm:col-span-2 flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Street Address</label>
-                                <Input {...register('address')} className="rounded-xl" placeholder="123 Avenue Hassan II" />
-                            </div>
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">City</label>
-                                <Input {...register('city')} className="rounded-xl" placeholder="Casablanca" />
-                            </div>
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Country</label>
-                                <Input {...register('country')} className="rounded-xl" placeholder="Morocco" />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Notes */}
-                    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-                        <h3 className="font-bold text-slate-800">Notes (appears on invoices)</h3>
-                        <Textarea
-                            {...register('notes')}
-                            className="rounded-xl resize-none h-24"
-                            placeholder="Payment terms, bank details, etc."
-                        />
-                    </div>
-
-                    <div className="flex justify-end">
-                        <Button type="submit" className="rounded-xl px-6" disabled={isSubmitting}>
-                            <Save className="mr-2 h-4 w-4" /> Save Profile
-                        </Button>
-                    </div>
-                </form>
-            </div>
+            </SettingsLayout>
         </AppLayout>
     );
 }

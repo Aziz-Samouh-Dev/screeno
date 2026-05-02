@@ -29,9 +29,9 @@ interface Props {
 }
 
 function stockBadge(qty: number) {
-    if (qty > 10) return { label: 'En stock',     cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', dot: 'bg-emerald-500' };
-    if (qty > 0)  return { label: 'Stock faible', cls: 'bg-amber-50  text-amber-700  border-amber-200',    dot: 'bg-amber-500'  };
-    return              { label: 'Rupture',       cls: 'bg-red-50    text-red-700    border-red-200',       dot: 'bg-red-500'    };
+    if (qty > 10) return { label: 'En stock',     cls: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800', dot: 'bg-emerald-500' };
+    if (qty > 0)  return { label: 'Stock faible', cls: 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',             dot: 'bg-amber-500'  };
+    return              { label: 'Rupture',       cls: 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800',                         dot: 'bg-red-500'    };
 }
 
 const fmt = (n: number) => Number(n).toLocaleString('fr-MA', { minimumFractionDigits: 2 });
@@ -86,10 +86,10 @@ export default function Index() {
     const to   = Math.min(produits.current_page * Number(perPage), Number(produits.total));
 
     const statCards = [
-        { label: 'Total produits',  value: globalStats.totalProduits, icon: Package,     bg: 'bg-slate-100',   ic: 'text-slate-600',  border: 'border-slate-200'  },
-        { label: 'Unités en stock', value: globalStats.totalStock,    icon: BarChart3,   bg: 'bg-blue-50',     ic: 'text-blue-600',   border: 'border-blue-100'   },
-        { label: 'Stock faible',    value: globalStats.lowStock,      icon: AlertCircle, bg: 'bg-amber-50',    ic: 'text-amber-600',  border: 'border-amber-100'  },
-        { label: 'Rupture de stock',value: globalStats.outOfStock,    icon: XCircle,     bg: 'bg-red-50',      ic: 'text-red-600',    border: 'border-red-100'    },
+        { label: 'Total produits',  value: globalStats.totalProduits, icon: Package,     bg: 'bg-muted',                                    ic: 'text-muted-foreground', border: 'border-border'   },
+        { label: 'Unités en stock', value: globalStats.totalStock,    icon: BarChart3,   bg: 'bg-blue-50 dark:bg-blue-950/30',              ic: 'text-blue-600 dark:text-blue-400',  border: 'border-blue-100 dark:border-blue-900'   },
+        { label: 'Stock faible',    value: globalStats.lowStock,      icon: AlertCircle, bg: 'bg-amber-50 dark:bg-amber-950/30',            ic: 'text-amber-600 dark:text-amber-400', border: 'border-amber-100 dark:border-amber-900'  },
+        { label: 'Rupture de stock',value: globalStats.outOfStock,    icon: XCircle,     bg: 'bg-red-50 dark:bg-red-950/30',                ic: 'text-red-600 dark:text-red-400',    border: 'border-red-100 dark:border-red-900'    },
     ];
 
     return (
@@ -100,17 +100,17 @@ export default function Index() {
                 title={confirmState.title} description={confirmState.description}
                 onConfirm={confirmState.onConfirm} loading={processing} />
 
-            <div className="flex flex-col gap-6 p-6 bg-slate-50/50 min-h-full">
+            <div className="flex flex-col gap-6 p-6">
 
                 {/* ── Header ── */}
                 <div className="flex items-center justify-between flex-wrap gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-violet-50 border border-violet-100">
-                            <Package className="h-5 w-5 text-violet-600" />
+                        <div className="p-2.5 rounded-xl bg-violet-50 dark:bg-violet-950/30 border border-violet-100 dark:border-violet-900/60">
+                            <Package className="h-5 w-5 text-violet-600 dark:text-violet-400" />
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-slate-900">Catalogue produits</h1>
-                            <p className="text-sm text-slate-400 mt-0.5">Gérez votre inventaire et vos produits</p>
+                            <h1 className="text-xl font-bold text-foreground">Catalogue produits</h1>
+                            <p className="text-sm text-muted-foreground mt-0.5">Gérez votre inventaire et vos produits</p>
                         </div>
                     </div>
                     <Link href="/produits/create">
@@ -123,39 +123,39 @@ export default function Index() {
                 {/* ── Stat cards ── */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {statCards.map(c => (
-                        <div key={c.label} className={`bg-white rounded-xl border shadow-sm p-5 ${c.border}`}>
+                        <div key={c.label} className={`bg-card rounded-xl border shadow-sm p-5 ${c.border}`}>
                             <div className="flex items-center justify-between mb-3">
                                 <div className={`p-2 rounded-lg ${c.bg}`}>
                                     <c.icon className={`h-4 w-4 ${c.ic}`} />
                                 </div>
                             </div>
-                            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{c.label}</p>
-                            <p className="text-2xl font-bold text-slate-900 mt-1 leading-none">{c.value}</p>
+                            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{c.label}</p>
+                            <p className="text-2xl font-bold text-foreground mt-1 leading-none">{c.value}</p>
                         </div>
                     ))}
                 </div>
 
                 {/* ── Table card ── */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
 
                     {/* Toolbar */}
-                    <div className="px-5 py-3.5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="px-5 py-3.5 border-b border-border/60 flex flex-col sm:flex-row sm:items-center gap-3">
                         <div className="relative flex-1 max-w-sm">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input placeholder="Rechercher par nom, SKU…"
-                                className="pl-9 h-9 rounded-lg border-slate-200"
+                                className="pl-9 h-9 rounded-lg border-border"
                                 value={search} onChange={e => setSearch(e.target.value)} />
                             {search && (
                                 <button onClick={() => setSearch('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground/90">
                                     <X className="h-3.5 w-3.5" />
                                 </button>
                             )}
                         </div>
-                        <div className="flex items-center gap-1.5 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-white">
-                            <SlidersHorizontal className="h-3.5 w-3.5 text-slate-400" />
+                        <div className="flex items-center gap-1.5 border border-border rounded-lg px-2.5 py-1.5 bg-card">
+                            <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
                             <Select value={stock} onValueChange={setStock}>
-                                <SelectTrigger className="border-0 p-0 h-auto text-xs font-medium text-slate-700 shadow-none focus:ring-0 w-32">
+                                <SelectTrigger className="border-0 p-0 h-auto text-xs font-medium text-foreground/90 shadow-none focus:ring-0 w-32">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -166,7 +166,7 @@ export default function Index() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div className="sm:ml-auto text-xs text-slate-400 font-medium">
+                        <div className="sm:ml-auto text-xs text-muted-foreground font-medium">
                             {produits.total} produit{Number(produits.total) !== 1 ? 's' : ''}
                         </div>
                     </div>
@@ -174,30 +174,30 @@ export default function Index() {
                     {/* Table */}
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm min-w-[700px]">
-                            <thead className="bg-slate-50 border-b border-slate-200">
+                            <thead className="bg-muted/40 border-b border-border/60">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider w-10">#</th>
-                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Produit</th>
-                                    <th className="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-10">#</th>
+                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Produit</th>
+                                    <th className="px-4 py-3 text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                                         <SortBtn field="purchase" label="Prix achat" />
                                     </th>
-                                    <th className="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                                    <th className="px-4 py-3 text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                                         <SortBtn field="sale" label="Prix vente" />
                                     </th>
-                                    <th className="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                                    <th className="px-4 py-3 text-right text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                                         <SortBtn field="stock" label="Stock" />
                                     </th>
-                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Statut</th>
-                                    <th className="px-4 py-3 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Statut</th>
+                                    <th className="px-4 py-3 text-center text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-border/60">
                                 {produits.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={7} className="px-4 py-20 text-center">
                                             <div className="flex flex-col items-center gap-2">
-                                                <Package className="h-12 w-12 text-slate-200" />
-                                                <p className="font-medium text-slate-400">Aucun produit trouvé</p>
+                                                <Package className="h-12 w-12 text-muted-foreground/20" />
+                                                <p className="font-medium text-muted-foreground">Aucun produit trouvé</p>
                                                 {search
                                                     ? <button onClick={() => setSearch('')} className="text-xs text-indigo-500 hover:underline">Effacer la recherche</button>
                                                     : <Link href="/produits/create"><span className="text-xs text-indigo-500 hover:underline">Ajouter votre premier produit →</span></Link>
@@ -211,36 +211,36 @@ export default function Index() {
                                     const margin = Number(p.sale_price) - Number(p.purchase_price);
                                     return (
                                         <tr key={p.uuid}
-                                            className="hover:bg-violet-50/20 transition-colors cursor-pointer group"
+                                            className="hover:bg-violet-50/20 dark:hover:bg-violet-950/20 transition-colors cursor-pointer group"
                                             onClick={() => router.visit(`/produits/${p.uuid}`)}>
 
                                             <td className="px-4 py-3.5">
-                                                <span className="text-xs text-slate-300 font-mono group-hover:text-violet-300">{rowNum}</span>
+                                                <span className="text-xs text-muted-foreground/40 font-mono group-hover:text-violet-300">{rowNum}</span>
                                             </td>
 
                                             <td className="px-4 py-3.5">
                                                 <div className="flex items-center gap-3">
                                                     {p.image ? (
                                                         <img src={`/storage/${p.image}`} alt={p.nom}
-                                                            className="h-9 w-9 rounded-lg object-cover shrink-0 border border-slate-200" />
+                                                            className="h-9 w-9 rounded-lg object-cover shrink-0 border border-border" />
                                                     ) : (
-                                                        <div className="h-9 w-9 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-                                                            <Package className="h-4 w-4 text-slate-400" />
+                                                        <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                                                            <Package className="h-4 w-4 text-muted-foreground" />
                                                         </div>
                                                     )}
                                                     <div>
-                                                        <p className="font-semibold text-slate-800 group-hover:text-violet-700 transition-colors text-sm">{p.nom}</p>
-                                                        <p className="text-xs font-mono text-slate-400">{p.sku}</p>
+                                                        <p className="font-semibold text-foreground group-hover:text-violet-700 dark:group-hover:text-violet-400 transition-colors text-sm">{p.nom}</p>
+                                                        <p className="text-xs font-mono text-muted-foreground">{p.sku}</p>
                                                     </div>
                                                 </div>
                                             </td>
 
-                                            <td className="px-4 py-3.5 text-right font-mono text-xs text-slate-500">
+                                            <td className="px-4 py-3.5 text-right font-mono text-xs text-muted-foreground">
                                                 {fmt(Number(p.purchase_price))} MAD
                                             </td>
 
                                             <td className="px-4 py-3.5 text-right">
-                                                <p className="font-mono text-xs font-semibold text-slate-800">{fmt(Number(p.sale_price))} MAD</p>
+                                                <p className="font-mono text-xs font-semibold text-foreground">{fmt(Number(p.sale_price))} MAD</p>
                                                 {margin > 0 && (
                                                     <div className="flex items-center justify-end gap-0.5 mt-0.5">
                                                         <TrendingUp className="h-3 w-3 text-emerald-500" />
@@ -249,7 +249,7 @@ export default function Index() {
                                                 )}
                                             </td>
 
-                                            <td className="px-4 py-3.5 text-right font-semibold text-slate-800 text-sm">
+                                            <td className="px-4 py-3.5 text-right font-semibold text-foreground text-sm">
                                                 {p.stock_quantity}
                                             </td>
 
@@ -264,17 +264,17 @@ export default function Index() {
                                                 <div className="flex items-center justify-center gap-1">
                                                     <button title="Voir"
                                                         onClick={() => router.visit(`/produits/${p.uuid}`)}
-                                                        className="h-7 w-7 rounded-lg hover:bg-slate-100 text-slate-500 flex items-center justify-center transition-colors">
+                                                        className="h-7 w-7 rounded-lg hover:bg-accent text-muted-foreground flex items-center justify-center transition-colors">
                                                         <Eye className="h-3.5 w-3.5" />
                                                     </button>
                                                     <button title="Modifier"
                                                         onClick={() => router.visit(`/produits/${p.uuid}/edit`)}
-                                                        className="h-7 w-7 rounded-lg hover:bg-slate-100 text-slate-500 flex items-center justify-center transition-colors">
+                                                        className="h-7 w-7 rounded-lg hover:bg-accent text-muted-foreground flex items-center justify-center transition-colors">
                                                         <Pencil className="h-3.5 w-3.5" />
                                                     </button>
                                                     <button title="Supprimer"
                                                         onClick={() => handleDelete(p.uuid, p.nom)}
-                                                        className="h-7 w-7 rounded-lg hover:bg-red-50 text-red-400 flex items-center justify-center transition-colors">
+                                                        className="h-7 w-7 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-red-400 flex items-center justify-center transition-colors">
                                                         <Trash2 className="h-3.5 w-3.5" />
                                                     </button>
                                                 </div>
@@ -287,22 +287,22 @@ export default function Index() {
                     </div>
 
                     {/* Pagination */}
-                    <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <p className="text-xs text-slate-500">
+                    <div className="px-5 py-3.5 border-t border-border/60 bg-muted/40 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <p className="text-xs text-muted-foreground">
                             {produits.data.length > 0
                                 ? `Affichage de ${from} à ${to} sur ${produits.total} produits`
                                 : '0 produit'}
                         </p>
                         <div className="flex items-center gap-3">
                             <div className="flex items-center gap-1.5">
-                                <span className="text-xs text-slate-400">Lignes</span>
+                                <span className="text-xs text-muted-foreground">Lignes</span>
                                 <Select value={perPage} onValueChange={v => { setPerPage(v); go({ per_page: v, page: 1 }); }}>
-                                    <SelectTrigger className="h-7 w-16 text-xs rounded-lg border-slate-200 bg-white"><SelectValue /></SelectTrigger>
+                                    <SelectTrigger className="h-7 w-16 text-xs rounded-lg border-border bg-card"><SelectValue /></SelectTrigger>
                                     <SelectContent>{['5','10','25','50'].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
                                 </Select>
                             </div>
-                            <span className="text-xs text-slate-500">
-                                Page <span className="font-semibold text-slate-700">{produits.current_page}</span> / <span className="font-semibold text-slate-700">{produits.last_page}</span>
+                            <span className="text-xs text-muted-foreground">
+                                Page <span className="font-semibold text-foreground/90">{produits.current_page}</span> / <span className="font-semibold text-foreground/90">{produits.last_page}</span>
                             </span>
                             <div className="flex gap-1">
                                 <Button variant="outline" size="icon" className="h-7 w-7 rounded-lg"

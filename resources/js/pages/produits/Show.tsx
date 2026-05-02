@@ -25,9 +25,9 @@ interface Produit {
 interface Props { produit: Produit }
 
 function stockInfo(qty: number) {
-    if (qty > 10) return { label: 'En stock',  cls: 'bg-green-50 text-green-700 border-green-200',  bar: 'bg-green-500'  };
-    if (qty > 0)  return { label: 'Stock faible', cls: 'bg-amber-50 text-amber-700 border-amber-200',  bar: 'bg-amber-500'  };
-    return            { label: 'Rupture',      cls: 'bg-red-50   text-red-700   border-red-200',    bar: 'bg-red-400'    };
+    if (qty > 10) return { label: 'En stock',     cls: 'bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800',  bar: 'bg-green-500'  };
+    if (qty > 0)  return { label: 'Stock faible', cls: 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',  bar: 'bg-amber-500'  };
+    return              { label: 'Rupture',       cls: 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800',              bar: 'bg-red-400'    };
 }
 
 export default function Show({ produit }: Props) {
@@ -73,8 +73,8 @@ export default function Show({ produit }: Props) {
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
                         <div>
-                            <h1 className="text-xl font-bold text-slate-900">{produit.nom}</h1>
-                            <p className="text-sm font-mono text-slate-400">{produit.sku}</p>
+                            <h1 className="text-xl font-bold text-foreground">{produit.nom}</h1>
+                            <p className="text-sm font-mono text-muted-foreground">{produit.sku}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -93,15 +93,15 @@ export default function Show({ produit }: Props) {
                     {/* IMAGE + SKU */}
                     <div className="space-y-4">
                         {/* Image */}
-                        <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                        <div className="rounded-3xl border border-border bg-card shadow-sm overflow-hidden">
                             <div
-                                className={`aspect-square ${produit.image ? 'cursor-zoom-in' : ''} bg-slate-50 flex items-center justify-center overflow-hidden`}
+                                className={`aspect-square ${produit.image ? 'cursor-zoom-in' : ''} bg-muted/40 flex items-center justify-center overflow-hidden`}
                                 onClick={() => produit.image && setShowModal(true)}
                             >
                                 {produit.image ? (
                                     <img src={`/storage/${produit.image}`} alt={produit.nom} className="w-full h-full object-cover" />
                                 ) : (
-                                    <div className="flex flex-col items-center gap-2 text-slate-300">
+                                    <div className="flex flex-col items-center gap-2 text-muted-foreground/40">
                                         <ImageOff className="h-12 w-12" />
                                         <span className="text-xs">Aucune image</span>
                                     </div>
@@ -112,31 +112,31 @@ export default function Show({ produit }: Props) {
                         {/* SKU copy */}
                         <button
                             onClick={copySku}
-                            className="w-full rounded-2xl border border-slate-200 bg-white p-4 flex items-center gap-3 hover:bg-slate-50 transition-colors shadow-sm"
+                            className="w-full rounded-2xl border border-border bg-card p-4 flex items-center gap-3 hover:bg-accent transition-colors shadow-sm"
                         >
-                            <div className="rounded-xl bg-slate-100 p-2">
-                                <Tag className="h-4 w-4 text-slate-500" />
+                            <div className="rounded-xl bg-muted p-2">
+                                <Tag className="h-4 w-4 text-muted-foreground" />
                             </div>
                             <div className="flex-1 text-left">
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">SKU</p>
-                                <p className="font-mono font-semibold text-slate-700">{produit.sku}</p>
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">SKU</p>
+                                <p className="font-mono font-semibold text-foreground/90">{produit.sku}</p>
                             </div>
                             {copied
                                 ? <Check className="h-4 w-4 text-green-500" />
-                                : <Copy className="h-4 w-4 text-slate-400" />}
+                                : <Copy className="h-4 w-4 text-muted-foreground" />}
                         </button>
 
                         {/* Stock status */}
-                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
                             <div className="flex items-center justify-between mb-3">
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Niveau de stock</p>
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Niveau de stock</p>
                                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold border ${si.cls}`}>{si.label}</span>
                             </div>
                             <div className="flex items-baseline gap-1 mb-2">
-                                <span className="text-3xl font-black text-slate-900">{produit.stock_quantity}</span>
-                                <span className="text-sm text-slate-400">unités</span>
+                                <span className="text-3xl font-black text-foreground">{produit.stock_quantity}</span>
+                                <span className="text-sm text-muted-foreground">unités</span>
                             </div>
-                            <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                            <div className="h-2 rounded-full bg-muted overflow-hidden">
                                 <div className={`h-full rounded-full ${si.bar} transition-all`}
                                     style={{ width: `${Math.min(100, (produit.stock_quantity / 50) * 100)}%` }} />
                             </div>
@@ -148,62 +148,62 @@ export default function Show({ produit }: Props) {
 
                         {/* Pricing cards */}
                         <div className="grid grid-cols-3 gap-4">
-                            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Prix d'achat</p>
-                                <p className="text-xl font-black text-slate-900">{Number(produit.purchase_price).toFixed(2)}</p>
-                                <p className="text-xs text-slate-400 mt-0.5">MAD</p>
+                            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Prix d'achat</p>
+                                <p className="text-xl font-black text-foreground">{Number(produit.purchase_price).toFixed(2)}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">MAD</p>
                             </div>
-                            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5 shadow-sm">
-                                <p className="text-xs font-bold text-blue-500 uppercase tracking-wide mb-2">Prix de vente</p>
-                                <p className="text-xl font-black text-blue-800">{Number(produit.sale_price).toFixed(2)}</p>
+                            <div className="rounded-2xl border border-blue-100 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/30 p-5 shadow-sm">
+                                <p className="text-xs font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wide mb-2">Prix de vente</p>
+                                <p className="text-xl font-black text-blue-800 dark:text-blue-300">{Number(produit.sale_price).toFixed(2)}</p>
                                 <p className="text-xs text-blue-400 mt-0.5">MAD</p>
                             </div>
-                            <div className={`rounded-2xl p-5 shadow-sm border ${margin >= 0 ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
-                                <p className={`text-xs font-bold uppercase tracking-wide mb-2 ${margin >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            <div className={`rounded-2xl p-5 shadow-sm border ${margin >= 0 ? 'bg-green-50 dark:bg-green-950/30 border-green-100 dark:border-green-900' : 'bg-red-50 dark:bg-red-950/30 border-red-100 dark:border-red-900'}`}>
+                                <p className={`text-xs font-bold uppercase tracking-wide mb-2 ${margin >= 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
                                     <TrendingUp className="inline h-3 w-3 mr-1" />Marge
                                 </p>
-                                <p className={`text-xl font-black ${margin >= 0 ? 'text-green-800' : 'text-red-700'}`}>
+                                <p className={`text-xl font-black ${margin >= 0 ? 'text-green-800 dark:text-green-300' : 'text-red-700 dark:text-red-400'}`}>
                                     {margin >= 0 ? '+' : ''}{margin.toFixed(2)}
                                 </p>
-                                <p className={`text-xs mt-0.5 ${margin >= 0 ? 'text-green-500' : 'text-red-400'}`}>
+                                <p className={`text-xs mt-0.5 ${margin >= 0 ? 'text-green-500 dark:text-green-400' : 'text-red-400'}`}>
                                     {marginPct.toFixed(1)}%
                                 </p>
                             </div>
                         </div>
 
                         {/* Description */}
-                        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                            <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                <Package className="h-4 w-4 text-slate-400" /> Description
+                        <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+                            <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
+                                <Package className="h-4 w-4 text-muted-foreground" /> Description
                             </h3>
                             {produit.description ? (
-                                <p className="text-sm text-slate-600 leading-relaxed">{produit.description}</p>
+                                <p className="text-sm text-muted-foreground leading-relaxed">{produit.description}</p>
                             ) : (
-                                <p className="text-sm text-slate-400 italic">Aucune description.</p>
+                                <p className="text-sm text-muted-foreground italic">Aucune description.</p>
                             )}
                         </div>
 
                         {/* Dates */}
-                        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                            <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                <BarChart3 className="h-4 w-4 text-slate-400" /> Infos produit
+                        <div className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+                            <h3 className="font-bold text-foreground mb-4 flex items-center gap-2">
+                                <BarChart3 className="h-4 w-4 text-muted-foreground" /> Infos produit
                             </h3>
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2 text-slate-500">
+                                    <div className="flex items-center gap-2 text-muted-foreground">
                                         <Calendar className="h-4 w-4" />
                                         <span>Créé le</span>
                                     </div>
-                                    <span className="font-medium text-slate-700">
+                                    <span className="font-medium text-foreground/90">
                                         {new Date(produit.created_at).toLocaleDateString('fr-MA', { day: '2-digit', month: 'long', year: 'numeric' })}
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2 text-slate-500">
+                                    <div className="flex items-center gap-2 text-muted-foreground">
                                         <Clock className="h-4 w-4" />
                                         <span>Dernière mise à jour</span>
                                     </div>
-                                    <span className="font-medium text-slate-700">
+                                    <span className="font-medium text-foreground/90">
                                         {new Date(produit.updated_at).toLocaleDateString('fr-MA', { day: '2-digit', month: 'long', year: 'numeric' })}
                                     </span>
                                 </div>

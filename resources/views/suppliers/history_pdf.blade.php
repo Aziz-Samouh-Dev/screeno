@@ -116,6 +116,11 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 9px; color: #1a1a1a; bac
     <td style="width:45%; vertical-align:top; text-align:right">
         <div class="doc-label">HISTORIQUE FOURNISSEUR</div>
         <div class="doc-sub">{{ $supplier->nom }}</div>
+        @if(!empty($dateFrom) || !empty($dateTo))
+        <div class="doc-meta" style="margin-top:4px; font-weight:700; color:#1e293b">
+            Période : {{ $dateFrom ?? '—' }} → {{ $dateTo ?? '—' }}
+        </div>
+        @endif
         <div class="doc-meta">Généré le {{ now()->format('d/m/Y H:i') }}</div>
     </td>
 </tr></table>

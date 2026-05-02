@@ -120,10 +120,11 @@ class ClientTransactionController extends Controller
     public function storeReturn(Request $request, Client $client)
     {
         $validated = $request->validate([
-            'items'              => 'required|array|min:1',
-            'items.*.product_id' => 'required|integer',
-            'items.*.quantity'   => 'required|integer|min:1',
-            'notes'              => 'nullable|string',
+            'items'                  => 'required|array|min:1',
+            'items.*.product_id'     => 'required|integer',
+            'items.*.quantity'       => 'required|integer|min:1',
+            'items.*.return_type'    => 'required|in:stock,damaged',
+            'notes'                  => 'nullable|string',
         ]);
 
         try {
@@ -150,6 +151,8 @@ class ClientTransactionController extends Controller
                     $productName = ClientTransaction::where('client_id', $client->id)
                         ->where('product_id', $item['product_id'])->value('product_name') ?? 'Produit';
 
+                    $returnType = $item['return_type'];
+
                     $transaction = ClientTransaction::create([
                         'client_id'    => $client->id,
                         'type'         => 'R',
@@ -159,15 +162,20 @@ class ClientTransactionController extends Controller
                         'unit_price'   => round($avgPrice, 2),
                         'total_price'  => round($avgPrice * $item['quantity'], 2),
                         'notes'        => $validated['notes'] ?? null,
+                        'return_type'  => $returnType,
                     ]);
 
-                    DamagedStock::create([
-                        'product_id'            => $item['product_id'],
-                        'product_name'          => $productName,
-                        'quantity'              => $item['quantity'],
-                        'client_id'             => $client->id,
-                        'client_transaction_id' => $transaction->id,
-                    ]);
+                    if ($returnType === 'stock') {
+                        Produit::find($item['product_id'])?->increment('stock_quantity', $item['quantity']);
+                    } else {
+                        DamagedStock::create([
+                            'product_id'            => $item['product_id'],
+                            'product_name'          => $productName,
+                            'quantity'              => $item['quantity'],
+                            'client_id'             => $client->id,
+                            'client_transaction_id' => $transaction->id,
+                        ]);
+                    }
                 }
             });
         } catch (\Exception $e) {
@@ -346,11 +354,14 @@ class ClientTransactionController extends Controller
         $totalP   = $transactions->where('type', 'P')->sum('total_price');
         $balance  = $totalF - $totalR - $totalP;
 
-        $company = (CompanyProfile::first() ?? new CompanyProfile())->toArray();
+        $company  = (CompanyProfile::first() ?? new CompanyProfile())->toArray();
+        $dateFrom = $request->date_from ? \Carbon\Carbon::parse($request->date_from)->format('d/m/Y') : null;
+        $dateTo   = $request->date_to   ? \Carbon\Carbon::parse($request->date_to)->format('d/m/Y')   : null;
 
         $pdf = Pdf::loadView('clients.ledger_pdf', compact(
             'client', 'rows', 'company',
-            'totalF', 'totalR', 'totalP', 'balance'
+            'totalF', 'totalR', 'totalP', 'balance',
+            'dateFrom', 'dateTo'
         ))->setPaper('a4', 'portrait');
 
         return $pdf->download("ledger-{$client->nom}.pdf");
