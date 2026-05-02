@@ -301,7 +301,7 @@ class ClientTransactionController extends Controller
                 'notes'         => $t->notes,
                 'created_at'    => $t->created_at->toIso8601String(),
             ];
-        });
+        })->reverse()->values();
 
         // Overall balance (unfiltered)
         $allTxns = ClientTransaction::where('client_id', $client->id)->get();

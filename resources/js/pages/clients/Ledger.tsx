@@ -206,20 +206,34 @@ export default function Ledger({ client, transactions, balance, filters: serverF
                         <p className="text-xl font-bold text-green-800 dark:text-green-300 font-mono">{fmt(totalPayments)}</p>
                         <p className="text-xs text-green-400 mt-0.5">{transactions.filter(t => t.type === 'P').length} paiements</p>
                     </div>
-                    <div className={`rounded-2xl p-4 ${balance > 0 ? 'bg-foreground' : 'border border-green-200 dark:border-green-900/60 bg-green-50 dark:bg-green-950/40'}`}>
+                    <div className={`rounded-2xl p-4 ${
+                        balance > 0
+                            ? 'bg-foreground'
+                            : balance < 0
+                            ? 'border border-blue-200 dark:border-blue-900/60 bg-blue-50 dark:bg-blue-950/40'
+                            : 'border border-green-200 dark:border-green-900/60 bg-green-50 dark:bg-green-950/40'
+                    }`}>
                         <div className="flex items-center gap-1 mb-1">
                             {balance > 0
                                 ? <TrendingUp className="h-3.5 w-3.5 text-amber-400" />
+                                : balance < 0
+                                ? <TrendingDown className="h-3.5 w-3.5 text-blue-500" />
                                 : <TrendingDown className="h-3.5 w-3.5 text-green-500" />}
-                            <p className={`text-xs font-bold uppercase tracking-wide ${balance > 0 ? 'text-background/60' : 'text-green-500'}`}>
-                                Solde à payer
+                            <p className={`text-xs font-bold uppercase tracking-wide ${
+                                balance > 0 ? 'text-background/60' : balance < 0 ? 'text-blue-600 dark:text-blue-400' : 'text-green-500'
+                            }`}>
+                                {balance < 0 ? 'Avoir client' : 'Solde à payer'}
                             </p>
                         </div>
-                        <p className={`text-xl font-bold font-mono ${balance > 0 ? 'text-amber-400' : 'text-green-600'}`}>
+                        <p className={`text-xl font-bold font-mono ${
+                            balance > 0 ? 'text-amber-400' : balance < 0 ? 'text-blue-600 dark:text-blue-400' : 'text-green-600'
+                        }`}>
                             {fmt(Math.abs(balance))}
                         </p>
-                        <p className={`text-xs mt-0.5 ${balance > 0 ? 'text-background/50' : 'text-green-400'}`}>
-                            {balance <= 0 ? 'Soldé' : 'En attente'}
+                        <p className={`text-xs mt-0.5 ${
+                            balance > 0 ? 'text-background/50' : balance < 0 ? 'text-blue-400' : 'text-green-400'
+                        }`}>
+                            {balance > 0 ? 'En attente' : balance < 0 ? 'Crédit à rembourser' : 'Soldé'}
                         </p>
                     </div>
                 </div>
@@ -289,8 +303,14 @@ export default function Ledger({ client, transactions, balance, filters: serverF
 
                                             {/* Running total */}
                                             <td className="px-5 py-3 text-right font-mono font-bold">
-                                                <span className={t.running_total > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}>
-                                                    {fmt(t.running_total)}
+                                                <span className={
+                                                    t.running_total > 0
+                                                        ? 'text-amber-600 dark:text-amber-400'
+                                                        : t.running_total < 0
+                                                        ? 'text-blue-600 dark:text-blue-400'
+                                                        : 'text-green-600 dark:text-green-400'
+                                                }>
+                                                    {t.running_total < 0 ? '−' : ''}{fmt(Math.abs(t.running_total))}
                                                 </span>
                                             </td>
                                         </tr>
@@ -307,9 +327,17 @@ export default function Ledger({ client, transactions, balance, filters: serverF
                                 {typeFilter !== 'ALL' ? ` · filtre : ${TYPE_LABELS[typeFilter]}` : ''}
                             </span>
                             <div className="flex items-center gap-2 text-sm font-bold">
-                                <span className="text-muted-foreground">Solde final :</span>
-                                <span className={`font-mono text-base ${balance > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}>
-                                    {fmt(balance)}
+                                <span className="text-muted-foreground">
+                                    {balance < 0 ? 'Avoir client :' : 'Solde final :'}
+                                </span>
+                                <span className={`font-mono text-base ${
+                                    balance > 0
+                                        ? 'text-amber-600 dark:text-amber-400'
+                                        : balance < 0
+                                        ? 'text-blue-600 dark:text-blue-400'
+                                        : 'text-green-600 dark:text-green-400'
+                                }`}>
+                                    {balance < 0 ? '−' : ''}{fmt(Math.abs(balance))}
                                 </span>
                             </div>
                         </div>

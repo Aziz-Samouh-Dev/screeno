@@ -104,7 +104,7 @@ class ClientController extends Controller
                 'notes'         => $t->notes,
                 'created_at'    => $t->created_at->toIso8601String(),
             ];
-        });
+        })->reverse()->values();
 
         return Inertia::render('clients/Show', [
             'client'       => $client->only(['uuid', 'nom', 'email', 'telephone', 'adresse', 'ville', 'notes', 'status', 'created_at', 'updated_at']),
