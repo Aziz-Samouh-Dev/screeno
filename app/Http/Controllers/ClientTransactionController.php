@@ -64,7 +64,7 @@ class ClientTransactionController extends Controller
                 }
             });
         } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error', $e->getMessage());
+            return redirect()->back()->withInput()->withErrors(['sell_error' => $e->getMessage()]);
         }
 
         return redirect()->route('clients.ledger', $client)
@@ -245,6 +245,18 @@ class ClientTransactionController extends Controller
             'notes'                     => 'nullable|string',
         ]);
 
+        // Server-side: ensure total paid doesn't exceed the client's overall balance
+        $allTxns = ClientTransaction::where('client_id', $client->id)->get();
+        $balance = $allTxns->reduce(fn ($c, $t) =>
+            $c + ($t->type === 'F' ? (float) $t->total_price : -(float) $t->total_price), 0.0
+        );
+        $totalPaying = array_sum(array_column($validated['payments'], 'amount'));
+        if (round($totalPaying, 2) > round($balance, 2) + 0.01) {
+            return back()->withErrors([
+                'payment_error' => 'Le total à payer (' . number_format($totalPaying, 2) . ') dépasse le solde dû (' . number_format($balance, 2) . ' MAD).',
+            ]);
+        }
+
         foreach ($validated['payments'] as $item) {
             $label = $validated['reference']
                 ? $item['product_name'] . ' — ' . $validated['reference']
@@ -334,7 +346,18 @@ class ClientTransactionController extends Controller
 
         $transactions = $query->get();
 
-        $rt = 0.0;
+        // Opening balance = RT of all transactions before the filter start
+        $openingBalance = 0.0;
+        if ($request->date_from) {
+            $prior = ClientTransaction::where('client_id', $client->id)
+                ->whereDate('created_at', '<', $request->date_from)
+                ->get();
+            $openingBalance = $prior->reduce(fn ($c, $t) =>
+                $c + ($t->type === 'F' ? (float) $t->total_price : -(float) $t->total_price), 0.0
+            );
+        }
+
+        $rt = $openingBalance;
         $rows = $transactions->map(function ($t) use (&$rt) {
             $rt += $t->type === 'F' ? (float) $t->total_price : -(float) $t->total_price;
             return [
@@ -349,10 +372,17 @@ class ClientTransactionController extends Controller
             ];
         });
 
-        $totalF   = $transactions->where('type', 'F')->sum('total_price');
-        $totalR   = $transactions->where('type', 'R')->sum('total_price');
-        $totalP   = $transactions->where('type', 'P')->sum('total_price');
-        $balance  = $totalF - $totalR - $totalP;
+        // Period totals (filtered)
+        $totalF  = $transactions->where('type', 'F')->sum('total_price');
+        $totalR  = $transactions->where('type', 'R')->sum('total_price');
+        $totalP  = $transactions->where('type', 'P')->sum('total_price');
+
+        // Overall balance (unfiltered — the real outstanding amount)
+        $allTxns = ClientTransaction::where('client_id', $client->id)->get();
+        $balance = $allTxns->reduce(fn ($c, $t) =>
+            $c + ($t->type === 'F' ? (float) $t->total_price : -(float) $t->total_price), 0.0
+        );
+        $balance = round($balance, 2);
 
         $company  = (CompanyProfile::first() ?? new CompanyProfile())->toArray();
         $dateFrom = $request->date_from ? \Carbon\Carbon::parse($request->date_from)->format('d/m/Y') : null;
@@ -361,7 +391,7 @@ class ClientTransactionController extends Controller
         $pdf = Pdf::loadView('clients.ledger_pdf', compact(
             'client', 'rows', 'company',
             'totalF', 'totalR', 'totalP', 'balance',
-            'dateFrom', 'dateTo'
+            'openingBalance', 'dateFrom', 'dateTo'
         ))->setPaper('a4', 'portrait');
 
         return $pdf->download("ledger-{$client->nom}.pdf");

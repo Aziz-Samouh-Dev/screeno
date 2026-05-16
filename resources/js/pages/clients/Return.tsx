@@ -66,7 +66,10 @@ function ReturnCombobox({
                 setOpen(false); setSearch('');
             }
         };
-        const onScroll = () => { setOpen(false); setSearch(''); };
+        const onScroll = (e: Event) => {
+            if (dropdownRef.current?.contains(e.target as Node)) return;
+            setOpen(false); setSearch('');
+        };
         document.addEventListener('mousedown', handle);
         window.addEventListener('scroll', onScroll, true);
         return () => { document.removeEventListener('mousedown', handle); window.removeEventListener('scroll', onScroll, true); };

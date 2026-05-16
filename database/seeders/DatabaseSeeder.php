@@ -162,140 +162,140 @@ class DatabaseSeeder extends Seeder
         //    F = Vente  |  R = Retour  |  P = Paiement
         // ══════════════════════════════════════════
 
-        $sell = function (int $clientId, int $productId, string $productName, int $qty, float $unitPrice, string $date) {
-            ClientTransaction::create([
-                'uuid'         => Str::uuid(),
-                'client_id'    => $clientId,
-                'type'         => 'F',
-                'product_id'   => $productId,
-                'product_name' => $productName,
-                'quantity'     => $qty,
-                'unit_price'   => $unitPrice,
-                'total_price'  => $qty * $unitPrice,
-                'notes'        => null,
-                'created_at'   => $date,
-                'updated_at'   => $date,
-            ]);
-        };
+        // $sell = function (int $clientId, int $productId, string $productName, int $qty, float $unitPrice, string $date) {
+        //     ClientTransaction::create([
+        //         'uuid'         => Str::uuid(),
+        //         'client_id'    => $clientId,
+        //         'type'         => 'F',
+        //         'product_id'   => $productId,
+        //         'product_name' => $productName,
+        //         'quantity'     => $qty,
+        //         'unit_price'   => $unitPrice,
+        //         'total_price'  => $qty * $unitPrice,
+        //         'notes'        => null,
+        //         'created_at'   => $date,
+        //         'updated_at'   => $date,
+        //     ]);
+        // };
 
-        $pay = function (int $clientId, float $amount, string $date) {
-            ClientTransaction::create([
-                'uuid'         => Str::uuid(),
-                'client_id'    => $clientId,
-                'type'         => 'P',
-                'product_id'   => null,
-                'product_name' => null,
-                'quantity'     => 0,
-                'unit_price'   => 0,
-                'total_price'  => $amount,
-                'notes'        => 'Paiement client',
-                'created_at'   => $date,
-                'updated_at'   => $date,
-            ]);
-        };
+        // $pay = function (int $clientId, float $amount, string $date) {
+        //     ClientTransaction::create([
+        //         'uuid'         => Str::uuid(),
+        //         'client_id'    => $clientId,
+        //         'type'         => 'P',
+        //         'product_id'   => null,
+        //         'product_name' => null,
+        //         'quantity'     => 0,
+        //         'unit_price'   => 0,
+        //         'total_price'  => $amount,
+        //         'notes'        => 'Paiement client',
+        //         'created_at'   => $date,
+        //         'updated_at'   => $date,
+        //     ]);
+        // };
 
-        // ── Client 1: TechMaroc SARL ──────────────────────────────────
-        // Sales:  3×6500 + 5×1800 = 28 500
-        //         2×7000          = 14 000   → cumul = 42 500
-        // Return: 1×7000          = 7 000    → cumul = 35 500
-        // Payments: 15 000 + 12 000 = 27 000 → balance = +8 500 ✓
-        $c1 = $clientIds[0];
-        $sell($c1, $produitIds[0], 'HP Pavilion 15 Laptop',  3, 6500, '2026-03-10 09:00:00');
-        $sell($c1, $produitIds[4], 'Écran Samsung 24" FHD',  5, 1800, '2026-03-10 09:05:00');
-        $pay($c1, 15000,                                              '2026-03-20 10:00:00');
-        $sell($c1, $produitIds[1], 'Dell Inspiron 15 3520',  2, 7000, '2026-04-05 14:00:00');
-        ClientTransaction::create([
-            'uuid' => Str::uuid(), 'client_id' => $c1, 'type' => 'R',
-            'product_id' => $produitIds[1], 'product_name' => 'Dell Inspiron 15 3520',
-            'quantity' => 1, 'unit_price' => 7000, 'total_price' => 7000,
-            'notes' => 'Retour défaut clavier', 'return_type' => 'stock',
-            'created_at' => '2026-04-12 09:00:00', 'updated_at' => '2026-04-12 09:00:00',
-        ]);
-        Produit::find($produitIds[1])?->increment('stock_quantity', 1);
-        $pay($c1, 12000, '2026-04-15 11:00:00');
-        // Running balance = 42500 − 7000 − 15000 − 12000 = +8500
+        // // ── Client 1: TechMaroc SARL ──────────────────────────────────
+        // // Sales:  3×6500 + 5×1800 = 28 500
+        // //         2×7000          = 14 000   → cumul = 42 500
+        // // Return: 1×7000          = 7 000    → cumul = 35 500
+        // // Payments: 15 000 + 12 000 = 27 000 → balance = +8 500 ✓
+        // $c1 = $clientIds[0];
+        // $sell($c1, $produitIds[0], 'HP Pavilion 15 Laptop',  3, 6500, '2026-03-10 09:00:00');
+        // $sell($c1, $produitIds[4], 'Écran Samsung 24" FHD',  5, 1800, '2026-03-10 09:05:00');
+        // $pay($c1, 15000,                                              '2026-03-20 10:00:00');
+        // $sell($c1, $produitIds[1], 'Dell Inspiron 15 3520',  2, 7000, '2026-04-05 14:00:00');
+        // ClientTransaction::create([
+        //     'uuid' => Str::uuid(), 'client_id' => $c1, 'type' => 'R',
+        //     'product_id' => $produitIds[1], 'product_name' => 'Dell Inspiron 15 3520',
+        //     'quantity' => 1, 'unit_price' => 7000, 'total_price' => 7000,
+        //     'notes' => 'Retour défaut clavier', 'return_type' => 'stock',
+        //     'created_at' => '2026-04-12 09:00:00', 'updated_at' => '2026-04-12 09:00:00',
+        // ]);
+        // Produit::find($produitIds[1])?->increment('stock_quantity', 1);
+        // $pay($c1, 12000, '2026-04-15 11:00:00');
+        // // Running balance = 42500 − 7000 − 15000 − 12000 = +8500
 
-        // ── Client 2: Informatique Plus ───────────────────────────────
-        // Sales:  4×5800 + 10×280 + 10×150 = 27 500
-        // Return: 1×5800 (damaged)          → cumul net = 21 700
-        // Payment: 18 000                   → balance = +3 700 ✓
-        $c2 = $clientIds[1];
-        $sell($c2, $produitIds[2], 'Lenovo IdeaPad Slim 3',  4, 5800, '2026-03-15 10:00:00');
-        $sell($c2, $produitIds[5], 'Clavier Logitech MK270', 10, 280, '2026-03-15 10:10:00');
-        $sell($c2, $produitIds[6], 'Souris Logitech M185',   10, 150, '2026-03-15 10:15:00');
-        $pay($c2, 18000,                                              '2026-03-28 09:00:00');
-        $t = ClientTransaction::create([
-            'uuid' => Str::uuid(), 'client_id' => $c2, 'type' => 'R',
-            'product_id' => $produitIds[2], 'product_name' => 'Lenovo IdeaPad Slim 3',
-            'quantity' => 1, 'unit_price' => 5800, 'total_price' => 5800,
-            'notes' => 'Écran cassé à la livraison', 'return_type' => 'damaged',
-            'created_at' => '2026-03-30 10:00:00', 'updated_at' => '2026-03-30 10:00:00',
-        ]);
-        DamagedStock::create([
-            'product_id' => $produitIds[2], 'product_name' => 'Lenovo IdeaPad Slim 3',
-            'quantity' => 1, 'client_id' => $c2, 'client_transaction_id' => $t->id,
-        ]);
-        // Running balance = 27500 − 5800 − 18000 = +3700
+        // // ── Client 2: Informatique Plus ───────────────────────────────
+        // // Sales:  4×5800 + 10×280 + 10×150 = 27 500
+        // // Return: 1×5800 (damaged)          → cumul net = 21 700
+        // // Payment: 18 000                   → balance = +3 700 ✓
+        // $c2 = $clientIds[1];
+        // $sell($c2, $produitIds[2], 'Lenovo IdeaPad Slim 3',  4, 5800, '2026-03-15 10:00:00');
+        // $sell($c2, $produitIds[5], 'Clavier Logitech MK270', 10, 280, '2026-03-15 10:10:00');
+        // $sell($c2, $produitIds[6], 'Souris Logitech M185',   10, 150, '2026-03-15 10:15:00');
+        // $pay($c2, 18000,                                              '2026-03-28 09:00:00');
+        // $t = ClientTransaction::create([
+        //     'uuid' => Str::uuid(), 'client_id' => $c2, 'type' => 'R',
+        //     'product_id' => $produitIds[2], 'product_name' => 'Lenovo IdeaPad Slim 3',
+        //     'quantity' => 1, 'unit_price' => 5800, 'total_price' => 5800,
+        //     'notes' => 'Écran cassé à la livraison', 'return_type' => 'damaged',
+        //     'created_at' => '2026-03-30 10:00:00', 'updated_at' => '2026-03-30 10:00:00',
+        // ]);
+        // DamagedStock::create([
+        //     'product_id' => $produitIds[2], 'product_name' => 'Lenovo IdeaPad Slim 3',
+        //     'quantity' => 1, 'client_id' => $c2, 'client_transaction_id' => $t->id,
+        // ]);
+        // // Running balance = 27500 − 5800 − 18000 = +3700
 
-        // ── Client 3: Bureau Solutions ────────────────────────────────
-        // Sales:  2×3900 + 20×65 + 3×350 = 10 150
-        // Payments: 6 000 + 3 000 = 9 000 → balance = +1 150 ✓
-        $c3 = $clientIds[2];
-        $sell($c3, $produitIds[9],  'HP LaserJet Pro M404dn', 2, 3900, '2026-03-20 11:00:00');
-        $sell($c3, $produitIds[11], 'Câble HDMI 2m',         20,   65, '2026-03-20 11:10:00');
-        $sell($c3, $produitIds[10], 'Switch TP-Link 8 ports', 3,  350, '2026-04-01 09:00:00');
-        $pay($c3, 6000,                                               '2026-04-10 14:00:00');
-        $pay($c3, 3000,                                               '2026-04-25 14:00:00');
-        // Running balance = 10150 − 6000 − 3000 = +1150
+        // // ── Client 3: Bureau Solutions ────────────────────────────────
+        // // Sales:  2×3900 + 20×65 + 3×350 = 10 150
+        // // Payments: 6 000 + 3 000 = 9 000 → balance = +1 150 ✓
+        // $c3 = $clientIds[2];
+        // $sell($c3, $produitIds[9],  'HP LaserJet Pro M404dn', 2, 3900, '2026-03-20 11:00:00');
+        // $sell($c3, $produitIds[11], 'Câble HDMI 2m',         20,   65, '2026-03-20 11:10:00');
+        // $sell($c3, $produitIds[10], 'Switch TP-Link 8 ports', 3,  350, '2026-04-01 09:00:00');
+        // $pay($c3, 6000,                                               '2026-04-10 14:00:00');
+        // $pay($c3, 3000,                                               '2026-04-25 14:00:00');
+        // // Running balance = 10150 − 6000 − 3000 = +1150
 
-        // ── Client 4: Karim Bensouda ──────────────────────────────────
-        // Sales:  1×6200 + 1×780 + 3×120 = 7 340
-        // Payments: 4 000 + 2 000 = 6 000 → balance = +1 340 ✓
-        $c4 = $clientIds[3];
-        $sell($c4, $produitIds[3], 'Asus VivoBook 15',          1, 6200, '2026-04-02 15:00:00');
-        $sell($c4, $produitIds[7], 'Disque dur externe 1TB WD', 1,  780, '2026-04-02 15:05:00');
-        $sell($c4, $produitIds[8], 'Clé USB 64GB Kingston',     3,  120, '2026-04-02 15:10:00');
-        $pay($c4, 4000, '2026-04-10 10:00:00');
-        $pay($c4, 2000, '2026-04-20 10:00:00');
-        // Running balance = 7340 − 4000 − 2000 = +1340
+        // // ── Client 4: Karim Bensouda ──────────────────────────────────
+        // // Sales:  1×6200 + 1×780 + 3×120 = 7 340
+        // // Payments: 4 000 + 2 000 = 6 000 → balance = +1 340 ✓
+        // $c4 = $clientIds[3];
+        // $sell($c4, $produitIds[3], 'Asus VivoBook 15',          1, 6200, '2026-04-02 15:00:00');
+        // $sell($c4, $produitIds[7], 'Disque dur externe 1TB WD', 1,  780, '2026-04-02 15:05:00');
+        // $sell($c4, $produitIds[8], 'Clé USB 64GB Kingston',     3,  120, '2026-04-02 15:10:00');
+        // $pay($c4, 4000, '2026-04-10 10:00:00');
+        // $pay($c4, 2000, '2026-04-20 10:00:00');
+        // // Running balance = 7340 − 4000 − 2000 = +1340
 
-        // ── Client 5: Sara El Amrani ──────────────────────────────────
-        // Sales:  2×720 + 2×950 = 3 340
-        // Payment: 3 000         → balance = +340 ✓
-        $c5 = $clientIds[4];
-        $sell($c5, $produitIds[13], 'Webcam Logitech C920',    2, 720, '2026-04-10 13:00:00');
-        $sell($c5, $produitIds[12], 'Casque USB Jabra Evolve', 2, 950, '2026-04-10 13:05:00');
-        $pay($c5, 3000, '2026-04-18 11:00:00');
-        // Running balance = 3340 − 3000 = +340
+        // // ── Client 5: Sara El Amrani ──────────────────────────────────
+        // // Sales:  2×720 + 2×950 = 3 340
+        // // Payment: 3 000         → balance = +340 ✓
+        // $c5 = $clientIds[4];
+        // $sell($c5, $produitIds[13], 'Webcam Logitech C920',    2, 720, '2026-04-10 13:00:00');
+        // $sell($c5, $produitIds[12], 'Casque USB Jabra Evolve', 2, 950, '2026-04-10 13:05:00');
+        // $pay($c5, 3000, '2026-04-18 11:00:00');
+        // // Running balance = 3340 − 3000 = +340
 
-        // ── Client 6: Digital Office MA ──────────────────────────────
-        // Sales:  5×6500 + 5×1800 + 3×850 = 44 050
-        // Returns: 1×850 (damaged) + 1×1800 (stock) = 2 650 → net = 41 400
-        // Payment: 20 000           → balance = +21 400 ✓
-        $c6 = $clientIds[5];
-        $sell($c6, $produitIds[0],  'HP Pavilion 15 Laptop',   5, 6500, '2026-04-15 09:00:00');
-        $sell($c6, $produitIds[4],  'Écran Samsung 24" FHD',   5, 1800, '2026-04-15 09:10:00');
-        $sell($c6, $produitIds[14], 'Onduleur APC 650VA',      3,  850, '2026-04-15 09:20:00');
-        $pay($c6, 20000, '2026-04-28 10:00:00');
-        $t2 = ClientTransaction::create([
-            'uuid' => Str::uuid(), 'client_id' => $c6, 'type' => 'R',
-            'product_id' => $produitIds[14], 'product_name' => 'Onduleur APC 650VA',
-            'quantity' => 1, 'unit_price' => 850, 'total_price' => 850,
-            'notes' => 'Onduleur grillé dès branchement', 'return_type' => 'damaged',
-            'created_at' => '2026-04-29 10:00:00', 'updated_at' => '2026-04-29 10:00:00',
-        ]);
-        DamagedStock::create([
-            'product_id' => $produitIds[14], 'product_name' => 'Onduleur APC 650VA',
-            'quantity' => 1, 'client_id' => $c6, 'client_transaction_id' => $t2->id,
-        ]);
-        $t3 = ClientTransaction::create([
-            'uuid' => Str::uuid(), 'client_id' => $c6, 'type' => 'R',
-            'product_id' => $produitIds[4], 'product_name' => 'Écran Samsung 24" FHD',
-            'quantity' => 1, 'unit_price' => 1800, 'total_price' => 1800,
-            'notes' => 'Retour sous 7 jours', 'return_type' => 'stock',
-            'created_at' => '2026-04-30 09:00:00', 'updated_at' => '2026-04-30 09:00:00',
-        ]);
-        Produit::find($produitIds[4])?->increment('stock_quantity', 1);
+        // // ── Client 6: Digital Office MA ──────────────────────────────
+        // // Sales:  5×6500 + 5×1800 + 3×850 = 44 050
+        // // Returns: 1×850 (damaged) + 1×1800 (stock) = 2 650 → net = 41 400
+        // // Payment: 20 000           → balance = +21 400 ✓
+        // $c6 = $clientIds[5];
+        // $sell($c6, $produitIds[0],  'HP Pavilion 15 Laptop',   5, 6500, '2026-04-15 09:00:00');
+        // $sell($c6, $produitIds[4],  'Écran Samsung 24" FHD',   5, 1800, '2026-04-15 09:10:00');
+        // $sell($c6, $produitIds[14], 'Onduleur APC 650VA',      3,  850, '2026-04-15 09:20:00');
+        // $pay($c6, 20000, '2026-04-28 10:00:00');
+        // $t2 = ClientTransaction::create([
+        //     'uuid' => Str::uuid(), 'client_id' => $c6, 'type' => 'R',
+        //     'product_id' => $produitIds[14], 'product_name' => 'Onduleur APC 650VA',
+        //     'quantity' => 1, 'unit_price' => 850, 'total_price' => 850,
+        //     'notes' => 'Onduleur grillé dès branchement', 'return_type' => 'damaged',
+        //     'created_at' => '2026-04-29 10:00:00', 'updated_at' => '2026-04-29 10:00:00',
+        // ]);
+        // DamagedStock::create([
+        //     'product_id' => $produitIds[14], 'product_name' => 'Onduleur APC 650VA',
+        //     'quantity' => 1, 'client_id' => $c6, 'client_transaction_id' => $t2->id,
+        // ]);
+        // $t3 = ClientTransaction::create([
+        //     'uuid' => Str::uuid(), 'client_id' => $c6, 'type' => 'R',
+        //     'product_id' => $produitIds[4], 'product_name' => 'Écran Samsung 24" FHD',
+        //     'quantity' => 1, 'unit_price' => 1800, 'total_price' => 1800,
+        //     'notes' => 'Retour sous 7 jours', 'return_type' => 'stock',
+        //     'created_at' => '2026-04-30 09:00:00', 'updated_at' => '2026-04-30 09:00:00',
+        // ]);
+        // Produit::find($produitIds[4])?->increment('stock_quantity', 1);
         // Running balance = 44050 − 850 − 1800 − 20000 = +21400
     }
 }

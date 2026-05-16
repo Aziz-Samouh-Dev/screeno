@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -139,6 +139,9 @@ function ProductCombobox({
 /* ── Main Component ── */
 
 export default function Sell({ client, products }: Props) {
+    const { props } = usePage<{ errors?: Record<string, string> }>();
+    const serverError = props.errors?.sell_error;
+
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Clients', href: '/clients' },
         { title: client.nom, href: `/clients/${client.uuid}` },
@@ -198,6 +201,13 @@ export default function Sell({ client, products }: Props) {
                         <p className="text-sm text-muted-foreground">{client.nom}{client.telephone ? ` · ${client.telephone}` : ''}</p>
                     </div>
                 </div>
+
+                {serverError && (
+                    <div className="flex items-center gap-2 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+                        <AlertTriangle className="h-4 w-4 shrink-0" />
+                        {serverError}
+                    </div>
+                )}
 
                 {anyOverStock && (
                     <div className="flex items-center gap-2 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 px-4 py-3 text-sm text-red-700 dark:text-red-400">

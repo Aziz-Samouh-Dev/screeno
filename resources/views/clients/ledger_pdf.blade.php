@@ -95,27 +95,35 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 9px; color: #1a1a1a; bac
     <td style="width:52%">
         <div class="section-lbl">Résumé</div>
         <table class="sum-box" style="width:100%; margin-top:4px">
+            @if(!empty($dateFrom) || !empty($dateTo))
             <tr><td>
                 <table class="sum-row" style="width:100%"><tr>
-                    <td class="sum-l">Total facturé (F)</td>
+                    <td class="sum-l">Solde report (avant période)</td>
+                    <td class="sum-r" style="color:#64748b">{{ number_format($openingBalance, 2, ',', ' ') }} MAD</td>
+                </tr></table>
+            </td></tr>
+            @endif
+            <tr><td>
+                <table class="sum-row" style="width:100%"><tr>
+                    <td class="sum-l">{{ (!empty($dateFrom) || !empty($dateTo)) ? 'Facturé (période)' : 'Total facturé (F)' }}</td>
                     <td class="sum-r">{{ number_format($totalF, 2, ',', ' ') }} MAD</td>
                 </tr></table>
             </td></tr>
             <tr><td>
                 <table class="sum-row" style="width:100%"><tr>
-                    <td class="sum-l">Total retours (R)</td>
+                    <td class="sum-l">{{ (!empty($dateFrom) || !empty($dateTo)) ? 'Retours (période)' : 'Total retours (R)' }}</td>
                     <td class="sum-r" style="color:#7e22ce">{{ number_format($totalR, 2, ',', ' ') }} MAD</td>
                 </tr></table>
             </td></tr>
             <tr><td>
                 <table class="sum-row" style="width:100%"><tr>
-                    <td class="sum-l">Total paiements (P)</td>
+                    <td class="sum-l">{{ (!empty($dateFrom) || !empty($dateTo)) ? 'Paiements (période)' : 'Total paiements (P)' }}</td>
                     <td class="sum-r" style="color:#15803d">{{ number_format($totalP, 2, ',', ' ') }} MAD</td>
                 </tr></table>
             </td></tr>
             <tr><td>
                 <table class="sum-final" style="width:100%"><tr>
-                    <td class="sum-fl">Solde dû</td>
+                    <td class="sum-fl">Solde total dû (global)</td>
                     <td class="sum-fr">{{ number_format($balance, 2, ',', ' ') }} MAD</td>
                 </tr></table>
             </td></tr>
@@ -134,6 +142,16 @@ body { font-family: DejaVu Sans, sans-serif; font-size: 9px; color: #1a1a1a; bac
         <th class="r" style="width:90px">RT</th>
     </tr></thead>
     <tbody>
+        @if(!empty($dateFrom) && $openingBalance != 0)
+        <tr style="background:#f8fafc">
+            <td style="font-family:'Courier New',monospace; font-size:8px; color:#64748b">Report — / —</td>
+            <td style="color:#64748b; font-style:italic">Solde reporté avant {{ $dateFrom }}</td>
+            <td class="c">—</td>
+            <td class="r">—</td>
+            <td class="r">—</td>
+            <td class="r {{ $openingBalance > 0 ? 'rt-pos' : 'rt-neg' }}">{{ number_format($openingBalance, 2, ',', ' ') }}</td>
+        </tr>
+        @endif
         @foreach($rows as $row)
         <tr>
             <td class="type-{{ strtolower($row['type']) }}" style="font-family:'Courier New',monospace; font-size:8px; white-space:nowrap">

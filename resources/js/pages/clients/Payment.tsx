@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -38,6 +38,9 @@ function distribute(total: number, items: OutstandingItem[]) {
 }
 
 export default function Payment({ client, balance, outstandingItems, paymentMethods }: Props) {
+    const { props } = usePage<{ errors?: Record<string, string> }>();
+    const serverError = props.errors?.payment_error;
+
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Clients',         href: '/clients' },
         { title: client.nom,        href: `/clients/${client.uuid}` },
@@ -92,7 +95,13 @@ export default function Payment({ client, balance, outstandingItems, paymentMeth
             const v = parseFloat(amounts[i.product_id] ?? String(i.amount_owed));
             return s + (isNaN(v) ? 0 : v);
         }, 0);
-    const manualValid = checked.size > 0 && manualTotal > 0.005;
+    const manualOver = manualTotal > balance + 0.005;
+    const manualItemOver = (id: number, owed: number) => {
+        const v = parseFloat(amounts[id] ?? String(owed));
+        return !isNaN(v) && v > owed + 0.005;
+    };
+    const hasItemOver = outstandingItems.some(i => checked.has(i.product_id) && manualItemOver(i.product_id, i.amount_owed));
+    const manualValid = checked.size > 0 && manualTotal > 0.005 && !manualOver && !hasItemOver;
 
     /* ── common ───────────────────────────────────── */
     const [reference,  setReference]  = useState('');
@@ -170,6 +179,13 @@ export default function Payment({ client, balance, outstandingItems, paymentMeth
                         </p>
                     </div>
                 </div>
+
+                {serverError && (
+                    <div className="flex items-center gap-2 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+                        <AlertTriangle className="h-4 w-4 shrink-0" />
+                        {serverError}
+                    </div>
+                )}
 
                 {/* Balance card */}
                 <div className={`rounded-2xl p-5 flex items-center justify-between ${
@@ -362,6 +378,12 @@ export default function Payment({ client, balance, outstandingItems, paymentMeth
                                         ? 'Tout décocher' : 'Tout sélectionner'}
                                 </button>
                             </div>
+                            {manualOver && (
+                                <div className="px-5 py-2.5 bg-red-50 dark:bg-red-950/30 border-b border-red-200 dark:border-red-800 flex items-center gap-2 text-xs font-semibold text-red-600 dark:text-red-400">
+                                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                                    Le total ({fmt(manualTotal)}) dépasse le solde dû ({fmt(balance)})
+                                </div>
+                            )}
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead className="text-xs font-bold uppercase text-muted-foreground border-b border-border/60">
@@ -383,9 +405,10 @@ export default function Payment({ client, balance, outstandingItems, paymentMeth
                                         {filtered.map(item => {
                                             const isChecked = checked.has(item.product_id);
                                             const amt = amounts[item.product_id] ?? String(item.amount_owed);
+                                            const itemOver = isChecked && manualItemOver(item.product_id, item.amount_owed);
                                             return (
                                                 <tr key={item.product_id}
-                                                    className={`transition-colors cursor-pointer ${isChecked ? 'bg-green-50/60 dark:bg-green-950/20' : 'hover:bg-accent'}`}
+                                                    className={`transition-colors cursor-pointer ${isChecked ? (itemOver ? 'bg-red-50/40 dark:bg-red-950/10' : 'bg-green-50/60 dark:bg-green-950/20') : 'hover:bg-accent'}`}
                                                     onClick={() => toggle(item.product_id, item.amount_owed)}>
                                                     <td className="px-5 py-3 text-center">
                                                         <input type="checkbox" readOnly checked={isChecked}
@@ -399,11 +422,20 @@ export default function Payment({ client, balance, outstandingItems, paymentMeth
                                                     </td>
                                                     <td className="px-5 py-3 text-right" onClick={e => e.stopPropagation()}>
                                                         {isChecked ? (
-                                                            <input type="number" min="0.01" step="0.01"
-                                                                value={amt}
-                                                                onChange={e => setAmounts(a => ({ ...a, [item.product_id]: e.target.value }))}
-                                                                className="w-36 rounded-lg border border-green-300 dark:border-green-700 bg-card text-foreground px-2 py-1 text-sm font-mono text-right focus:outline-none focus:ring-2 focus:ring-green-200"
-                                                            />
+                                                            <div className="flex flex-col items-end gap-0.5">
+                                                                <input type="number" min="0.01" step="0.01"
+                                                                    value={amt}
+                                                                    onChange={e => setAmounts(a => ({ ...a, [item.product_id]: e.target.value }))}
+                                                                    className={`w-36 rounded-lg border bg-card text-foreground px-2 py-1 text-sm font-mono text-right focus:outline-none focus:ring-2 ${
+                                                                        itemOver
+                                                                            ? 'border-red-300 dark:border-red-700 focus:ring-red-200'
+                                                                            : 'border-green-300 dark:border-green-700 focus:ring-green-200'
+                                                                    }`}
+                                                                />
+                                                                {itemOver && (
+                                                                    <span className="text-[10px] font-semibold text-red-500">Dépasse le dû</span>
+                                                                )}
+                                                            </div>
                                                         ) : (
                                                             <span className="text-muted-foreground/50 text-xs">—</span>
                                                         )}
@@ -473,7 +505,13 @@ export default function Payment({ client, balance, outstandingItems, paymentMeth
                                     </div>
                                 ) : (
                                     <p className="text-sm text-muted-foreground">
-                                        {mode === 'auto' ? 'Entrez le montant à régler' : 'Sélectionnez au moins un produit'}
+                                        {mode === 'auto'
+                                            ? 'Entrez le montant à régler'
+                                            : manualOver
+                                                ? 'Total dépasse le solde dû'
+                                                : hasItemOver
+                                                    ? 'Un montant dépasse le dû du produit'
+                                                    : 'Sélectionnez au moins un produit'}
                                     </p>
                                 )}
                             </div>
