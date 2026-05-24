@@ -10,15 +10,20 @@ import {
     CircleCheck, ChevronRight, BarChart3, Activity,
 } from 'lucide-react';
 
-interface TrendPoint { label: string; sales: number; returns: number; payments: number }
-interface TopClient  { uuid: string; nom: string; total_purchased: number }
-interface RecentTxn  { uuid: string; type: string; client_uuid: string; client_nom: string; product_name: string | null; total_price: number; created_at: string }
-interface LowStock   { uuid: string; nom: string; sku: string; stock_quantity: number }
+interface TrendPoint   { label: string; sales: number; returns: number; payments: number }
+interface QtyPoint     { label: string; sold: number; returned: number }
+interface TopClient    { uuid: string; nom: string; total_purchased: number }
+interface TopProduct   { product_name: string; total_qty: number; total_amount: number }
+interface RecentTxn    { uuid: string; type: string; client_uuid: string; client_nom: string; product_name: string | null; total_price: number; created_at: string }
+interface LowStock     { uuid: string; nom: string; sku: string; stock_quantity: number }
 interface DashProps {
     crm:        { total_f: number; total_r: number; total_p: number; balance: number; txn_count: number };
+    qty:        { sold: number; returned: number; net: number };
     counts:     { clients: number; active_clients: number; suppliers: number; products: number; low_stock: number; damaged_qty: number };
     trendData:  TrendPoint[];
+    qtyTrend:   QtyPoint[];
     topClients: TopClient[];
+    topProducts: TopProduct[];
     recentTxns: RecentTxn[];
     lowStockProducts: LowStock[];
     filters:    { period: string; date_from: string; date_to: string };
@@ -162,7 +167,7 @@ function LineChart({ data }: { data: TrendPoint[] }) {
                 })}
             </svg>
             {hover !== null && (
-                <div className="absolute top-2 z-20 pointer-events-none bg-card border border-border text-foreground rounded-xl shadow-xl px-3.5 py-3 min-w-[170px]"
+                <div className="absolute top-2 z-20 pointer-events-none bg-card border border-border text-foreground rounded-xl shadow-xl px-3.5 py-3 min-w-42.5"
                     style={tipRight
                         ? { right: `${(1 - xAt(hover) / VW) * 100}%`, marginRight: 14 }
                         : { left:  `${(xAt(hover)  / VW) * 100}%`,    marginLeft:  14 }}>
@@ -184,6 +189,104 @@ function LineChart({ data }: { data: TrendPoint[] }) {
                     </div>
                 </div>
             )}
+        </div>
+    );
+}
+
+function BarChart({ data }: { data: QtyPoint[] }) {
+    const [hover, setHover] = useState<number | null>(null);
+    const { resolvedAppearance } = useAppearance();
+    const isDark = resolvedAppearance === 'dark';
+
+    const gridColor  = isDark ? '#1f1f1f' : '#f1f5f9';
+    const labelColor = isDark ? '#555555' : '#94a3b8';
+
+    const VW = 900, VH = 200, PL = 42, PR = 12, PT = 12, PB = 32;
+    const CW = VW - PL - PR, CH = VH - PT - PB;
+    const n = data.length;
+
+    if (n === 0) return (
+        <div className="h-44 flex items-center justify-center text-muted-foreground text-sm select-none">
+            Aucune donnée sur cette période
+        </div>
+    );
+
+    const maxVal = Math.max(...data.map(d => Math.max(d.sold, d.returned)), 1);
+    const yTicks = [0, 0.25, 0.5, 0.75, 1].map(f => ({ y: PT + (1 - f) * CH, v: Math.round(maxVal * f) }));
+
+    const slotW  = CW / n;
+    const gap    = Math.max(2, slotW * 0.08);
+    const barW   = Math.max(4, (slotW - gap * 3) / 2);
+    const xSlot  = (i: number) => PL + i * slotW + slotW / 2;
+    const xB1    = (i: number) => xSlot(i) - gap / 2 - barW;
+    const xB2    = (i: number) => xSlot(i) + gap / 2;
+    const barH   = (v: number) => Math.max(0, (v / maxVal) * CH);
+    const yBar   = (v: number) => PT + CH - barH(v);
+
+    const xStep  = Math.max(1, Math.ceil(n / 9));
+
+    return (
+        <div className="relative select-none">
+            <svg viewBox={`0 0 ${VW} ${VH}`} className="w-full block" preserveAspectRatio="none" style={{ height: 200 }}
+                onMouseLeave={() => setHover(null)}>
+                {yTicks.map((t, i) => (
+                    <g key={i}>
+                        <line x1={PL} y1={t.y} x2={VW - PR} y2={t.y} stroke={gridColor} strokeWidth="1" />
+                        <text x={PL - 5} y={t.y + 4} textAnchor="end" fontSize="9" fill={labelColor} fontFamily="ui-monospace,monospace">
+                            {t.v}
+                        </text>
+                    </g>
+                ))}
+                {data.map((d, i) => i % xStep === 0 && (
+                    <text key={i} x={xSlot(i)} y={VH - 5} textAnchor="middle" fontSize="9" fill={labelColor}>{d.label}</text>
+                ))}
+                {data.map((d, i) => (
+                    <g key={i} onMouseEnter={() => setHover(i)}>
+                        {/* sold bar */}
+                        <rect x={xB1(i)} y={yBar(d.sold)} width={barW} height={barH(d.sold)}
+                            fill="#6366f1" fillOpacity={hover === i ? 1 : 0.75} rx="2" />
+                        {/* returned bar */}
+                        <rect x={xB2(i)} y={yBar(d.returned)} width={barW} height={barH(d.returned)}
+                            fill="#a855f7" fillOpacity={hover === i ? 1 : 0.75} rx="2" />
+                        {/* hover target */}
+                        <rect x={PL + i * slotW} y={PT} width={slotW} height={CH} fill="transparent" />
+                    </g>
+                ))}
+            </svg>
+            {hover !== null && (() => {
+                const d   = data[hover];
+                const tipX = xSlot(hover) / VW;
+                return (
+                    <div className="absolute top-2 z-20 pointer-events-none bg-card border border-border text-foreground rounded-xl shadow-xl px-3.5 py-3 min-w-37.5"
+                        style={tipX > 0.6
+                            ? { right: `${(1 - tipX) * 100}%`, marginRight: 14 }
+                            : { left:  `${tipX * 100}%`,        marginLeft:  14 }}>
+                        <p className="text-[11px] text-muted-foreground font-semibold mb-2 pb-1.5 border-b border-border/60">{d.label}</p>
+                        <div className="space-y-1.5">
+                            <div className="flex items-center justify-between gap-4">
+                                <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                                    <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
+                                    Vendues
+                                </span>
+                                <span className="text-[11px] font-mono font-bold text-foreground">{d.sold} u.</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-4">
+                                <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                                    <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
+                                    Retournées
+                                </span>
+                                <span className="text-[11px] font-mono font-bold text-foreground">{d.returned} u.</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-4 border-t border-border/40 pt-1.5">
+                                <span className="text-[11px] text-muted-foreground">Net</span>
+                                <span className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                                    {d.sold - d.returned} u.
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
         </div>
     );
 }
@@ -232,12 +335,15 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Tableau de bord', href: '/dashb
 export default function Dashboard() {
     const raw  = usePage().props as unknown as Partial<DashProps>;
     const crm  = raw.crm    ?? { total_f:0, total_r:0, total_p:0, balance:0, txn_count:0 };
+    const qty  = raw.qty    ?? { sold:0, returned:0, net:0 };
     const cnt  = raw.counts ?? { clients:0, active_clients:0, suppliers:0, products:0, low_stock:0, damaged_qty:0 };
-    const trend    = raw.trendData        ?? [];
-    const tops     = raw.topClients       ?? [];
-    const txns     = raw.recentTxns       ?? [];
-    const lowStock = raw.lowStockProducts ?? [];
-    const sf       = raw.filters          ?? { period:'month', date_from:'', date_to:'' };
+    const trend       = raw.trendData        ?? [];
+    const qtyTrend    = raw.qtyTrend         ?? [];
+    const tops        = raw.topClients       ?? [];
+    const topProducts = raw.topProducts      ?? [];
+    const txns        = raw.recentTxns       ?? [];
+    const lowStock    = raw.lowStockProducts ?? [];
+    const sf          = raw.filters          ?? { period:'month', date_from:'', date_to:'' };
 
     const [period,   setPeriod]   = useState(sf.period    ?? 'month');
     const [dateFrom, setDateFrom] = useState(sf.date_from ?? '');
@@ -362,6 +468,99 @@ export default function Dashboard() {
                     </div>
                     <div className="px-3 py-4">
                         <LineChart data={trend} />
+                    </div>
+                </div>
+
+                {/* ── Product Quantity Analytics ── */}
+                <div className="bg-card rounded-xl border border-border shadow-sm">
+                    <div className="px-5 pt-5 pb-4 border-b border-border/60">
+                        <div className="flex items-start justify-between gap-4 flex-wrap">
+                            <div>
+                                <h2 className="text-sm font-semibold text-foreground">Analyse produits — Unités</h2>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                    Quantités vendues et retournées · {PERIODS.find(p => p.key === period)?.label}
+                                    {period === 'custom' && dateFrom && dateTo ? ` · ${dateFrom} → ${dateTo}` : ''}
+                                </p>
+                            </div>
+                            {/* KPI mini-cards */}
+                            <div className="flex items-center gap-3 flex-wrap">
+                                <div className="flex flex-col items-end gap-0.5 px-3 py-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-500">Vendues</span>
+                                    <span className="text-lg font-bold font-mono text-indigo-700 dark:text-indigo-300 leading-none">
+                                        {qty.sold.toLocaleString('fr-MA')} <span className="text-xs font-normal">u.</span>
+                                    </span>
+                                </div>
+                                <div className="flex flex-col items-end gap-0.5 px-3 py-2 rounded-lg bg-purple-50 dark:bg-purple-950/40 border border-purple-100 dark:border-purple-900/60">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-purple-500">Retournées</span>
+                                    <span className="text-lg font-bold font-mono text-purple-700 dark:text-purple-300 leading-none">
+                                        {qty.returned.toLocaleString('fr-MA')} <span className="text-xs font-normal">u.</span>
+                                    </span>
+                                </div>
+                                <div className="flex flex-col items-end gap-0.5 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/60">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500">Net vendues</span>
+                                    <span className="text-lg font-bold font-mono text-emerald-700 dark:text-emerald-300 leading-none">
+                                        {qty.net.toLocaleString('fr-MA')} <span className="text-xs font-normal">u.</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {/* Legend */}
+                        <div className="flex items-center gap-5 mt-3">
+                            <div className="flex items-center gap-1.5">
+                                <span className="w-3 h-3 rounded-sm bg-indigo-500 shrink-0" />
+                                <span className="text-xs text-muted-foreground">Vendues</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <span className="w-3 h-3 rounded-sm bg-purple-500 shrink-0" />
+                                <span className="text-xs text-muted-foreground">Retournées</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Bar chart + top products side by side */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-border/60">
+                        <div className="lg:col-span-2 px-3 py-4">
+                            <BarChart data={qtyTrend} />
+                        </div>
+
+                        {/* Top 5 products */}
+                        <div className="px-5 py-4">
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
+                                Top produits · unités
+                            </p>
+                            {topProducts.length === 0 ? (
+                                <div className="flex flex-col items-center gap-2 py-8 text-muted-foreground">
+                                    <Package className="h-8 w-8 opacity-20" />
+                                    <p className="text-xs">Aucune vente sur la période</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3.5">
+                                    {topProducts.map((p, i) => {
+                                        const maxQty = topProducts[0]?.total_qty ?? 1;
+                                        return (
+                                            <div key={i}>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-[10px] font-bold text-muted-foreground w-4 shrink-0">#{i + 1}</span>
+                                                    <span className="text-xs font-semibold text-foreground truncate flex-1">{p.product_name}</span>
+                                                    <span className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 shrink-0">
+                                                        {p.total_qty} u.
+                                                    </span>
+                                                </div>
+                                                <div className="ml-6 flex items-center gap-2">
+                                                    <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                                                        <div className="h-full rounded-full bg-indigo-500 transition-all duration-500"
+                                                            style={{ width: `${Math.round((p.total_qty / maxQty) * 100)}%` }} />
+                                                    </div>
+                                                    <span className="text-[10px] text-muted-foreground font-mono shrink-0">
+                                                        {fmt(p.total_amount)} MAD
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 

@@ -25,7 +25,8 @@ class ProduitController extends Controller
 
         $totalStock = Produit::sum('stock_quantity');
 
-        $lowStock = Produit::whereBetween('stock_quantity', [1, 10])->count();
+        $lowStock = Produit::whereColumn('stock_quantity', '<=', 'stock_alert_threshold')
+            ->where('stock_quantity', '>', 0)->count();
 
         $outOfStock = Produit::where('stock_quantity', 0)->count();
 
@@ -48,13 +49,12 @@ class ProduitController extends Controller
             // 📦 Stock filter
             ->when($request->stock, function ($query, $stock) {
                 if ($stock === 'in_stock') {
-                    $query->where('stock_quantity', '>', 10);
+                    $query->whereColumn('stock_quantity', '>', 'stock_alert_threshold');
                 }
-
                 if ($stock === 'low_stock') {
-                    $query->whereBetween('stock_quantity', [1, 10]);
+                    $query->whereColumn('stock_quantity', '<=', 'stock_alert_threshold')
+                          ->where('stock_quantity', '>', 0);
                 }
-
                 if ($stock === 'out_of_stock') {
                     $query->where('stock_quantity', 0);
                 }
@@ -123,13 +123,16 @@ class ProduitController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nom' => 'required|string|max:255',
-            'image' => 'nullable|image',
-            'description' => 'nullable|string',
-            'purchase_price' => 'required|numeric|min:0',
-            'sale_price' => 'required|numeric|min:0',
-            'stock_quantity' => 'required|integer|min:0',
+            'nom'                   => 'required|string|max:255',
+            'image'                 => 'nullable|image',
+            'description'           => 'nullable|string',
+            'purchase_price'        => 'required|numeric|min:0',
+            'sale_price'            => 'required|numeric|min:0',
+            'stock_quantity'        => 'required|integer|min:0',
+            'stock_alert_threshold' => 'nullable|integer|min:0',
         ]);
+
+        $validated['stock_alert_threshold'] = $validated['stock_alert_threshold'] ?? 10;
 
         // Handle image upload
         if ($request->hasFile('image')) {
@@ -169,13 +172,18 @@ class ProduitController extends Controller
     public function update(Request $request, Produit $produit)
     {
         $validated = $request->validate([
-            'nom' => 'required|string|max:255',
-            'image' => 'nullable|image',
-            'description' => 'nullable|string',
-            'purchase_price' => 'required|numeric|min:0',
-            'sale_price' => 'required|numeric|min:0',
-            'stock_quantity' => 'required|integer|min:0',
+            'nom'                   => 'required|string|max:255',
+            'image'                 => 'nullable|image',
+            'description'           => 'nullable|string',
+            'purchase_price'        => 'required|numeric|min:0',
+            'sale_price'            => 'required|numeric|min:0',
+            'stock_quantity'        => 'required|integer|min:0',
+            'stock_alert_threshold' => 'nullable|integer|min:0',
         ]);
+
+        if (!isset($validated['stock_alert_threshold'])) {
+            $validated['stock_alert_threshold'] = 10;
+        }
 
         // Handle image logic
         if ($request->hasFile('image')) {

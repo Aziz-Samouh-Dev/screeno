@@ -23,7 +23,7 @@ class ClientTransactionController extends Controller
     {
         return Inertia::render('clients/Sell', [
             'client'   => $client->only(['uuid', 'nom', 'telephone']),
-            'products' => Produit::select('id', 'nom', 'sale_price', 'stock_quantity')
+            'products' => Produit::select('id', 'nom', 'sale_price', 'stock_quantity', 'stock_alert_threshold')
                 ->orderBy('nom')->get(),
         ]);
     }

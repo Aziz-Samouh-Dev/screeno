@@ -17,6 +17,10 @@ class ClientController extends Controller
         $inactiveClients = Client::where('status', 'inactive')->count();
 
         $clients = Client::query()
+            ->selectRaw("clients.*, ROUND(
+                COALESCE((SELECT SUM(total_price) FROM client_transactions WHERE client_id = clients.id AND type = 'F'), 0) -
+                COALESCE((SELECT SUM(total_price) FROM client_transactions WHERE client_id = clients.id AND type IN ('R','P')), 0)
+            , 2) as balance")
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('nom', 'like', "%{$search}%")

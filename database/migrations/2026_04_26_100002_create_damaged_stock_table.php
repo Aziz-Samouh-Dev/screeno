@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('product_name');
             $table->integer('quantity');
             $table->foreignId('client_id')->constrained('clients')->cascadeOnDelete();
-            $table->foreignId('client_transaction_id')->constrained('client_transactions')->cascadeOnDelete();
+            $table->foreignId('client_transaction_id')->nullable()->constrained('client_transactions')->nullOnDelete();
             $table->timestamps();
         });
     }

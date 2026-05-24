@@ -21,12 +21,13 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const formSchema = z.object({
-    nom:            z.string().min(1, { message: 'Product name is required' }),
-    image:          z.any().optional(),
-    description:    z.string().optional(),
-    purchase_price: z.preprocess(v => Number(v), z.number().min(0, { message: 'Purchase price required' })),
-    sale_price:     z.preprocess(v => Number(v), z.number().min(0, { message: 'Sale price required' })),
-    stock_quantity: z.preprocess(v => Number(v), z.number().min(0, { message: 'Stock quantity required' })),
+    nom:                    z.string().min(1, { message: 'Product name is required' }),
+    image:                  z.any().optional(),
+    description:            z.string().optional(),
+    purchase_price:         z.preprocess(v => Number(v), z.number().min(0, { message: 'Purchase price required' })),
+    sale_price:             z.preprocess(v => Number(v), z.number().min(0, { message: 'Sale price required' })),
+    stock_quantity:         z.preprocess(v => Number(v), z.number().min(0, { message: 'Stock quantity required' })),
+    stock_alert_threshold:  z.preprocess(v => Number(v), z.number().min(0)),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -37,7 +38,7 @@ export default function Create() {
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema) as any,
-        defaultValues: { nom: '', description: '', image: null, purchase_price: 0, sale_price: 0, stock_quantity: 0 },
+        defaultValues: { nom: '', description: '', image: null, purchase_price: 0, sale_price: 0, stock_quantity: 0, stock_alert_threshold: 10 },
     });
 
     const watchPurchase = form.watch('purchase_price');
@@ -47,11 +48,12 @@ export default function Create() {
 
     function onSubmit(values: FormValues) {
         const fd = new FormData();
-        fd.append('nom',            values.nom);
-        fd.append('description',    values.description ?? '');
-        fd.append('purchase_price', String(values.purchase_price));
-        fd.append('sale_price',     String(values.sale_price));
-        fd.append('stock_quantity', String(values.stock_quantity));
+        fd.append('nom',                    values.nom);
+        fd.append('description',            values.description ?? '');
+        fd.append('purchase_price',         String(values.purchase_price));
+        fd.append('sale_price',             String(values.sale_price));
+        fd.append('stock_quantity',         String(values.stock_quantity));
+        fd.append('stock_alert_threshold',  String(values.stock_alert_threshold ?? 10));
         if (values.image) fd.append('image', values.image);
 
         router.post('/produits', fd, {
@@ -202,13 +204,23 @@ export default function Create() {
                             <h3 className="font-bold text-foreground flex items-center gap-2">
                                 <BarChart3 className="h-4 w-4 text-muted-foreground" /> Stock
                             </h3>
-                            <Controller control={form.control} name="stock_quantity" render={({ field, fieldState }) => (
-                                <Field className="flex flex-col gap-1.5 max-w-xs" data-invalid={fieldState.invalid}>
-                                    <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Stock initial *</FieldLabel>
-                                    <Input type="number" min="0" placeholder="0" className="rounded-xl" {...field} />
-                                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                                </Field>
-                            )} />
+                            <div className="grid grid-cols-2 gap-4">
+                                <Controller control={form.control} name="stock_quantity" render={({ field, fieldState }) => (
+                                    <Field className="flex flex-col gap-1.5" data-invalid={fieldState.invalid}>
+                                        <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Stock initial *</FieldLabel>
+                                        <Input type="number" min="0" placeholder="0" className="rounded-xl" {...field} />
+                                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                                    </Field>
+                                )} />
+                                <Controller control={form.control} name="stock_alert_threshold" render={({ field, fieldState }) => (
+                                    <Field className="flex flex-col gap-1.5" data-invalid={fieldState.invalid}>
+                                        <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Seuil alerte stock</FieldLabel>
+                                        <Input type="number" min="0" placeholder="10" className="rounded-xl" {...field} />
+                                        <p className="text-[11px] text-muted-foreground">Alerte si stock ≤ ce seuil. Défaut : 10</p>
+                                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                                    </Field>
+                                )} />
+                            </div>
                         </div>
 
                         {/* Actions */}

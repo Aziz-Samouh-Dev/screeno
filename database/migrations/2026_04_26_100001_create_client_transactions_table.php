@@ -19,6 +19,7 @@ return new class extends Migration
             $table->decimal('unit_price', 12, 2)->nullable();
             $table->decimal('total_price', 12, 2)->default(0);
             $table->text('notes')->nullable();
+            $table->enum('return_type', ['stock', 'damaged'])->nullable();
             $table->timestamps();
         });
     }

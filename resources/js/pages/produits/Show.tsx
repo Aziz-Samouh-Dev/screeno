@@ -18,16 +18,17 @@ interface Produit {
     purchase_price: number;
     sale_price: number;
     stock_quantity: number;
+    stock_alert_threshold: number;
     created_at: string;
     updated_at: string;
 }
 
 interface Props { produit: Produit }
 
-function stockInfo(qty: number) {
-    if (qty > 10) return { label: 'En stock',     cls: 'bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800',  bar: 'bg-green-500'  };
-    if (qty > 0)  return { label: 'Stock faible', cls: 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',  bar: 'bg-amber-500'  };
-    return              { label: 'Rupture',       cls: 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800',              bar: 'bg-red-400'    };
+function stockInfo(qty: number, threshold: number) {
+    if (qty > threshold) return { label: 'En stock',     cls: 'bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800',  bar: 'bg-green-500'  };
+    if (qty > 0)         return { label: 'Stock faible', cls: 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',  bar: 'bg-amber-500'  };
+    return                      { label: 'Rupture',       cls: 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800',              bar: 'bg-red-400'    };
 }
 
 export default function Show({ produit }: Props) {
@@ -39,7 +40,7 @@ export default function Show({ produit }: Props) {
     const [showModal, setShowModal] = useState(false);
     const [copied, setCopied]       = useState(false);
 
-    const si     = stockInfo(produit.stock_quantity);
+    const si     = stockInfo(produit.stock_quantity, produit.stock_alert_threshold);
     const margin = Number(produit.sale_price) - Number(produit.purchase_price);
     const marginPct = Number(produit.purchase_price) > 0
         ? (margin / Number(produit.purchase_price)) * 100 : 0;

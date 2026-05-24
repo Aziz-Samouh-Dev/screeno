@@ -13,6 +13,7 @@ interface Product {
     nom: string;
     sale_price: number;
     stock_quantity: number;
+    stock_alert_threshold: number;
 }
 
 interface Client {
@@ -27,6 +28,7 @@ interface SellItem {
     quantity: number;
     unit_price: number;
     stock_quantity: number;
+    stock_alert_threshold: number;
 }
 
 interface Props {
@@ -122,7 +124,7 @@ function ProductCombobox({
                                     }`}>
                                     <span className="font-medium text-foreground text-sm truncate">{p.nom}</span>
                                     <span className={`text-xs font-mono shrink-0 ${
-                                        noStock ? 'text-red-500' : p.stock_quantity <= 10 ? 'text-amber-500' : 'text-muted-foreground'
+                                        noStock ? 'text-red-500' : p.stock_quantity <= p.stock_alert_threshold ? 'text-amber-500' : 'text-muted-foreground'
                                     }`}>
                                         {noStock ? 'rupture' : `${p.stock_quantity} dispo.`}
                                     </span>
@@ -149,7 +151,7 @@ export default function Sell({ client, products }: Props) {
     ];
 
     const [items, setItems] = useState<SellItem[]>([
-        { product_id: null, product_name: '', quantity: 1, unit_price: 0, stock_quantity: 0 },
+        { product_id: null, product_name: '', quantity: 1, unit_price: 0, stock_quantity: 0, stock_alert_threshold: 10 },
     ]);
     const [notes, setNotes] = useState('');
     const [processing, setProcessing] = useState(false);
@@ -162,11 +164,11 @@ export default function Sell({ client, products }: Props) {
 
     const selectProduct = (index: number, product: Product) => {
         setItems(prev => prev.map((item, i) =>
-            i === index ? { ...item, product_id: product.id, product_name: product.nom, unit_price: product.sale_price, stock_quantity: product.stock_quantity } : item
+            i === index ? { ...item, product_id: product.id, product_name: product.nom, unit_price: product.sale_price, stock_quantity: product.stock_quantity, stock_alert_threshold: product.stock_alert_threshold } : item
         ));
     };
 
-    const addRow = () => setItems(prev => [...prev, { product_id: null, product_name: '', quantity: 1, unit_price: 0, stock_quantity: 0 }]);
+    const addRow = () => setItems(prev => [...prev, { product_id: null, product_name: '', quantity: 1, unit_price: 0, stock_quantity: 0, stock_alert_threshold: 10 }]);
     const removeRow = (index: number) => setItems(prev => prev.filter((_, i) => i !== index));
 
     const subtotal = items.reduce((sum, i) => sum + i.quantity * i.unit_price, 0);
@@ -248,7 +250,7 @@ export default function Sell({ client, products }: Props) {
                                                 {item.product_id ? (
                                                     <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-bold font-mono ${
                                                         item.stock_quantity === 0 ? 'bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400' :
-                                                        item.stock_quantity <= 10 ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400' :
+                                                        item.stock_quantity <= item.stock_alert_threshold ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400' :
                                                         'bg-green-100 dark:bg-green-950/50 text-green-600 dark:text-green-400'
                                                     }`}>{item.stock_quantity}</span>
                                                 ) : <span className="text-muted-foreground/50">—</span>}

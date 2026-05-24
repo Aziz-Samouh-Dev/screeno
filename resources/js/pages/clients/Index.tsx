@@ -17,7 +17,9 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Clients', href: '/clients' }];
 
 interface Client {
     uuid: string; nom: string; email?: string | null;
-    telephone: string; ville?: string | null; status: 'active' | 'inactive';
+    telephone: string; ville?: string | null;
+    status: 'active' | 'inactive';
+    balance: number;
 }
 interface PaginatedData {
     total: ReactNode; data: Client[];
@@ -288,7 +290,7 @@ export default function Index() {
 
                     {/* Table */}
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm min-w-[700px]">
+                        <table className="w-full text-sm min-w-175">
                             <thead className="bg-muted/40 border-b border-border/60">
                                 <tr>
                                     <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-10">#</th>
@@ -300,7 +302,7 @@ export default function Index() {
                                         <SortBtn field="city" label="Ville" />
                                     </th>
                                     <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                                        <SortBtn field="status" label="Statut" />
+                                        Solde / Statut
                                     </th>
                                     <th className="px-4 py-3 text-center text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
                                 </tr>
@@ -346,14 +348,35 @@ export default function Index() {
                                             <td className="px-4 py-3.5 text-muted-foreground text-xs">{c.ville || '—'}</td>
 
                                             <td className="px-4 py-3.5">
-                                                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${
-                                                    c.status === 'active'
-                                                        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/60'
-                                                        : 'bg-red-50 dark:bg-red-950/40 text-red-600 border-red-200 dark:border-red-900/60'
-                                                }`}>
-                                                    <span className={`h-1.5 w-1.5 rounded-full ${c.status === 'active' ? 'bg-emerald-500' : 'bg-red-400'}`} />
-                                                    {c.status === 'active' ? 'Actif' : 'Inactif'}
-                                                </span>
+                                                <div className="flex flex-col gap-0.5">
+                                                    {c.balance > 0.005 ? (
+                                                        <>
+                                                            <span className="font-mono font-bold text-sm text-amber-600 dark:text-amber-400">
+                                                                {Number(c.balance).toLocaleString('fr-MA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD
+                                                            </span>
+                                                            <span className="text-[10px] text-amber-500 font-medium">doit</span>
+                                                        </>
+                                                    ) : c.balance < -0.005 ? (
+                                                        <>
+                                                            <span className="font-mono font-bold text-sm text-blue-600 dark:text-blue-400">
+                                                                {Number(Math.abs(c.balance)).toLocaleString('fr-MA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD
+                                                            </span>
+                                                            <span className="text-[10px] text-blue-500 font-medium">avoir client</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <span className="font-mono font-bold text-sm text-emerald-600 dark:text-emerald-400">
+                                                                0,00 MAD
+                                                            </span>
+                                                            <span className="text-[10px] text-emerald-500 font-medium">soldé</span>
+                                                        </>
+                                                    )}
+                                                    {c.status === 'inactive' && (
+                                                        <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground bg-muted border border-border/60 w-fit mt-0.5">
+                                                            Inactif
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
 
                                             <td className="px-3 py-3.5" onClick={e => e.stopPropagation()}>

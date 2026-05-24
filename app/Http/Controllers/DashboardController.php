@@ -56,10 +56,10 @@ class DashboardController extends Controller
         }
 
         /* ── Group transactions by period ── */
-        $grpTxn = function (string $type) use ($from, $to, $sqlFmt) {
+        $grpTxn = function (string $type, string $col = 'total_price') use ($from, $to, $sqlFmt) {
             return ClientTransaction::where('type', $type)
                 ->whereBetween('created_at', [$from, $to])
-                ->selectRaw("DATE_FORMAT(created_at, '{$sqlFmt}') as grp, SUM(total_price) as total")
+                ->selectRaw("DATE_FORMAT(created_at, '{$sqlFmt}') as grp, SUM({$col}) as total")
                 ->groupBy('grp')
                 ->pluck('total', 'grp');
         };
@@ -68,6 +68,10 @@ class DashboardController extends Controller
         $dataR = $grpTxn('R');
         $dataP = $grpTxn('P');
 
+        // Quantity (units) per period
+        $qtyF = $grpTxn('F', 'quantity');
+        $qtyR = $grpTxn('R', 'quantity');
+
         $trendData = $keys->values()->map(fn ($k, $i) => [
             'label'    => $labels->values()[$i] ?? $k,
             'sales'    => round((float) ($dataF[$k] ?? 0), 2),
@@ -75,11 +79,20 @@ class DashboardController extends Controller
             'payments' => round((float) ($dataP[$k] ?? 0), 2),
         ])->values();
 
+        $qtyTrend = $keys->values()->map(fn ($k, $i) => [
+            'label'    => $labels->values()[$i] ?? $k,
+            'sold'     => (int) ($qtyF[$k] ?? 0),
+            'returned' => (int) ($qtyR[$k] ?? 0),
+        ])->values();
+
         /* ── Filtered aggregates ── */
         $totalF     = (float) ClientTransaction::whereBetween('created_at', [$from, $to])->where('type', 'F')->sum('total_price');
         $totalR     = (float) ClientTransaction::whereBetween('created_at', [$from, $to])->where('type', 'R')->sum('total_price');
         $totalP     = (float) ClientTransaction::whereBetween('created_at', [$from, $to])->where('type', 'P')->sum('total_price');
         $crmBalance = round($totalF - $totalR - $totalP, 2);
+
+        $totalQtySold     = (int) ClientTransaction::whereBetween('created_at', [$from, $to])->where('type', 'F')->whereNotNull('quantity')->sum('quantity');
+        $totalQtyReturned = (int) ClientTransaction::whereBetween('created_at', [$from, $to])->where('type', 'R')->whereNotNull('quantity')->sum('quantity');
 
         /* ── Top 5 clients by sales (filtered period) ── */
         $topClients = ClientTransaction::whereBetween('client_transactions.created_at', [$from, $to])
@@ -93,6 +106,21 @@ class DashboardController extends Controller
                 'uuid'            => $r->uuid,
                 'nom'             => $r->nom,
                 'total_purchased' => round((float) $r->total_purchased, 2),
+            ]);
+
+        /* ── Top 5 products by qty sold (filtered period) ── */
+        $topProducts = ClientTransaction::whereBetween('created_at', [$from, $to])
+            ->where('type', 'F')
+            ->whereNotNull('quantity')
+            ->whereNotNull('product_id')
+            ->selectRaw('product_id, product_name, SUM(quantity) as total_qty, SUM(total_price) as total_amount')
+            ->groupBy('product_id', 'product_name')
+            ->orderByDesc('total_qty')
+            ->take(5)->get()
+            ->map(fn ($r) => [
+                'product_name'  => $r->product_name,
+                'total_qty'     => (int) $r->total_qty,
+                'total_amount'  => round((float) $r->total_amount, 2),
             ]);
 
         /* ── Recent 8 transactions (always unfiltered) ── */
@@ -115,19 +143,26 @@ class DashboardController extends Controller
                 'balance'   => $crmBalance,
                 'txn_count' => ClientTransaction::whereBetween('created_at', [$from, $to])->count(),
             ],
+            'qty' => [
+                'sold'     => $totalQtySold,
+                'returned' => $totalQtyReturned,
+                'net'      => $totalQtySold - $totalQtyReturned,
+            ],
+            'qtyTrend' => $qtyTrend,
             'counts' => [
                 'clients'        => Client::count(),
                 'active_clients' => Client::where('status', 'active')->count(),
                 'suppliers'      => Supplier::count(),
                 'products'       => Produit::count(),
-                'low_stock'      => Produit::where('stock_quantity', '<=', 5)->count(),
+                'low_stock'      => Produit::whereColumn('stock_quantity', '<=', 'stock_alert_threshold')->where('stock_quantity', '>', 0)->count(),
                 'damaged_qty'    => (int) DamagedStock::sum('quantity'),
             ],
             'trendData'        => $trendData,
             'topClients'       => $topClients,
+            'topProducts'      => $topProducts,
             'recentTxns'       => $recentTxns,
-            'lowStockProducts' => Produit::where('stock_quantity', '<=', 5)
-                ->orderBy('stock_quantity')->take(6)->get(['uuid', 'nom', 'sku', 'stock_quantity']),
+            'lowStockProducts' => Produit::whereColumn('stock_quantity', '<=', 'stock_alert_threshold')
+                ->orderBy('stock_quantity')->take(6)->get(['uuid', 'nom', 'sku', 'stock_quantity', 'stock_alert_threshold']),
             'filters' => [
                 'period'    => $period,
                 'date_from' => $dateFrom ?? '',

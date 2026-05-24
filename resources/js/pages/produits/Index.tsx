@@ -16,7 +16,8 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Produits', href: '/produits' }]
 
 interface Produit {
     uuid: string; nom: string; sku: string;
-    image: string | null; purchase_price: string; sale_price: string; stock_quantity: number;
+    image: string | null; purchase_price: string; sale_price: string;
+    stock_quantity: number; stock_alert_threshold: number;
 }
 interface PaginatedData {
     total: ReactNode; data: Produit[];
@@ -28,10 +29,10 @@ interface Props {
     filters: { search?: string; stock?: string; sort?: string; per_page?: string };
 }
 
-function stockBadge(qty: number) {
-    if (qty > 10) return { label: 'En stock',     cls: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800', dot: 'bg-emerald-500' };
-    if (qty > 0)  return { label: 'Stock faible', cls: 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',             dot: 'bg-amber-500'  };
-    return              { label: 'Rupture',       cls: 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800',                         dot: 'bg-red-500'    };
+function stockBadge(qty: number, threshold: number) {
+    if (qty > threshold) return { label: 'En stock',     cls: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800', dot: 'bg-emerald-500' };
+    if (qty > 0)         return { label: 'Stock faible', cls: 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',             dot: 'bg-amber-500'  };
+    return                      { label: 'Rupture',       cls: 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800',                         dot: 'bg-red-500'    };
 }
 
 const fmt = (n: number) => Number(n).toLocaleString('fr-MA', { minimumFractionDigits: 2 });
@@ -173,7 +174,7 @@ export default function Index() {
 
                     {/* Table */}
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm min-w-[700px]">
+                        <table className="w-full text-sm min-w-175">
                             <thead className="bg-muted/40 border-b border-border/60">
                                 <tr>
                                     <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-10">#</th>
@@ -207,7 +208,7 @@ export default function Index() {
                                     </tr>
                                 ) : produits.data.map((p, idx) => {
                                     const rowNum = ((produits.current_page - 1) * Number(perPage)) + idx + 1;
-                                    const sb     = stockBadge(p.stock_quantity);
+                                    const sb     = stockBadge(p.stock_quantity, p.stock_alert_threshold);
                                     const margin = Number(p.sale_price) - Number(p.purchase_price);
                                     return (
                                         <tr key={p.uuid}
