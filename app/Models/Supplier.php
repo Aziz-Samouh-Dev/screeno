@@ -2,34 +2,23 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Supplier extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
-        'uuid',
-        'nom',
-        'email',
-        'telephone',
-        'adresse',
-        'ville',
-        'notes',
-        'status',
+        'uuid', 'nom', 'email', 'telephone',
+        'adresse', 'ville', 'notes', 'status',
     ];
 
-    protected static function booted()
+    protected static function booted(): void
     {
-        static::creating(function ($supplier) {
-            $supplier->uuid = \Str::uuid();
-        });
+        static::creating(fn ($s) => $s->uuid ??= Str::uuid());
     }
 
-    public function getRouteKeyName()
-    {
-        return 'uuid';
-    }
+    public function getRouteKeyName(): string { return 'uuid'; }
 
+    public function produits()             { return $this->hasMany(Produit::class); }
+    public function supplierTransactions() { return $this->hasMany(SupplierTransaction::class); }
 }

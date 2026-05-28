@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\ProduitController;
 use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\SupplierTransactionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -45,6 +46,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/stock',    [ClientTransactionController::class, 'stockList'])->name('stock.index');
 
     // SUPPLIERS
+    Route::get('/suppliers/{supplier}/purchase',  [SupplierTransactionController::class, 'purchaseForm'])->name('suppliers.purchase');
+    Route::post('/suppliers/{supplier}/purchase', [SupplierTransactionController::class, 'storePurchase'])->name('suppliers.purchase.store');
+    Route::get('/suppliers/{supplier}/return',    [SupplierTransactionController::class, 'returnForm'])->name('suppliers.return');
+    Route::post('/suppliers/{supplier}/return',   [SupplierTransactionController::class, 'storeReturn'])->name('suppliers.return.store');
+    Route::get('/suppliers/{supplier}/ledger',    [SupplierTransactionController::class, 'ledger'])->name('suppliers.ledger');
+
     Route::resource('suppliers', SupplierController::class);
     Route::post('/suppliers/bulk-delete', [SupplierController::class, 'bulkDelete'])
         ->name('suppliers.bulk-delete');

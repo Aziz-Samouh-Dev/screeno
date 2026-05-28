@@ -19,6 +19,7 @@ return new class extends Migration
             $table->decimal('sale_price', 15, 2);
             $table->integer('stock_quantity')->default(0);
             $table->unsignedInteger('stock_alert_threshold')->default(10);
+            $table->foreignId('supplier_id')->nullable()->constrained('suppliers')->nullOnDelete();
             $table->timestamps();
         });
     }

@@ -4,8 +4,9 @@ import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import {
     ChevronLeft, ChevronRight, Plus, Truck, UserCheck, UserX,
-    Search, ArrowUpDown, Trash2, Download, Pencil, Eye,
+    Search, ArrowUpDown, Trash2, Download, Pencil,
     SlidersHorizontal, X, Phone, MapPin,
+    ShoppingBag, RotateCcw, BookOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,7 @@ interface Supplier {
     uuid: string; nom: string; email: string;
     telephone: string | null; ville: string | null;
     status: 'active' | 'inactive';
+    balance: number;
 }
 interface PaginatedData {
     total: ReactNode; data: Supplier[];
@@ -60,7 +62,7 @@ export default function Index() {
     const handleDelete = (uuid: string, nom: string) => {
         confirm({
             title: 'Supprimer ce fournisseur ?',
-            description: `« ${nom} » sera définitivement supprimé. Cette action est irréversible.`,
+            description: `« ${nom} » sera définitivement supprimé.`,
             onConfirm: () => {
                 setProcessing(true);
                 router.delete(`/suppliers/${uuid}`, {
@@ -113,7 +115,7 @@ export default function Index() {
                             <Download className="h-4 w-4 mr-1.5" /> Exporter CSV
                         </Button>
                         <Link href="/suppliers/create">
-                            <Button size="sm" className="rounded-lg bg-indigo-600 hover:bg-indigo-700">
+                            <Button size="sm" className="rounded-lg bg-blue-600 hover:bg-blue-700">
                                 <Plus className="h-4 w-4 mr-1.5" /> Nouveau fournisseur
                             </Button>
                         </Link>
@@ -123,16 +125,12 @@ export default function Index() {
                 {/* ── Stat cards ── */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="bg-card rounded-xl border border-border shadow-sm p-5">
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="p-2 rounded-lg bg-muted">
-                                <Truck className="h-4 w-4 text-muted-foreground" />
-                            </div>
+                        <div className="p-2 rounded-lg bg-muted w-fit mb-3">
+                            <Truck className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Total fournisseurs</p>
                         <p className="text-3xl font-bold text-foreground mt-1 leading-none">{total}</p>
-                        <p className="text-xs text-muted-foreground mt-1.5">dans le registre</p>
                     </div>
-
                     <div className="bg-card rounded-xl border border-emerald-100 dark:border-emerald-900 shadow-sm p-5">
                         <div className="flex items-center justify-between mb-3">
                             <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30">
@@ -140,13 +138,12 @@ export default function Index() {
                             </div>
                             <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full">{activePct}%</span>
                         </div>
-                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Fournisseurs actifs</p>
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Actifs</p>
                         <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-400 mt-1 leading-none">{active}</p>
                         <div className="mt-3 h-1.5 bg-emerald-100 dark:bg-emerald-950/40 rounded-full overflow-hidden">
                             <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${activePct}%` }} />
                         </div>
                     </div>
-
                     <div className="bg-card rounded-xl border border-red-100 dark:border-red-900 shadow-sm p-5">
                         <div className="flex items-center justify-between mb-3">
                             <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/30">
@@ -154,7 +151,7 @@ export default function Index() {
                             </div>
                             <span className="text-xs font-semibold text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-2 py-0.5 rounded-full">{inactivePct}%</span>
                         </div>
-                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Fournisseurs inactifs</p>
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Inactifs</p>
                         <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-1 leading-none">{inactive}</p>
                         <div className="mt-3 h-1.5 bg-red-100 dark:bg-red-950/40 rounded-full overflow-hidden">
                             <div className="h-full bg-red-400 rounded-full" style={{ width: `${inactivePct}%` }} />
@@ -162,7 +159,7 @@ export default function Index() {
                     </div>
                 </div>
 
-                {/* ── Table card ── */}
+                {/* ── Table ── */}
                 <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
 
                     {/* Toolbar */}
@@ -199,7 +196,7 @@ export default function Index() {
 
                     {/* Table */}
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm min-w-[640px]">
+                        <table className="w-full text-sm min-w-175">
                             <thead className="bg-muted/40 border-b border-border/60">
                                 <tr>
                                     <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-10">#</th>
@@ -208,9 +205,7 @@ export default function Index() {
                                     </th>
                                     <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Téléphone</th>
                                     <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Ville</th>
-                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                                        <SortBtn field="status" label="Statut" />
-                                    </th>
+                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Solde / Statut</th>
                                     <th className="px-4 py-3 text-center text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
@@ -222,8 +217,8 @@ export default function Index() {
                                                 <Truck className="h-12 w-12 text-muted-foreground/20" />
                                                 <p className="font-medium text-muted-foreground">Aucun fournisseur trouvé</p>
                                                 {search
-                                                    ? <button onClick={() => setSearch('')} className="text-xs text-indigo-500 hover:underline">Effacer la recherche</button>
-                                                    : <Link href="/suppliers/create"><span className="text-xs text-indigo-500 hover:underline">Ajouter votre premier fournisseur →</span></Link>
+                                                    ? <button onClick={() => setSearch('')} className="text-xs text-blue-500 hover:underline">Effacer la recherche</button>
+                                                    : <Link href="/suppliers/create"><span className="text-xs text-blue-500 hover:underline">Ajouter votre premier fournisseur →</span></Link>
                                                 }
                                             </div>
                                         </td>
@@ -232,11 +227,11 @@ export default function Index() {
                                     const rowNum = ((suppliers.current_page - 1) * Number(perPage)) + idx + 1;
                                     return (
                                         <tr key={s.uuid}
-                                            className="hover:bg-accent transition-colors cursor-pointer group"
+                                            className="hover:bg-blue-50/30 dark:hover:bg-blue-950/20 transition-colors cursor-pointer group"
                                             onClick={() => router.visit(`/suppliers/${s.uuid}`)}>
 
                                             <td className="px-4 py-3.5">
-                                                <span className="text-xs text-muted-foreground/40 font-mono group-hover:text-blue-400 dark:group-hover:text-blue-500">{rowNum}</span>
+                                                <span className="text-xs text-muted-foreground/40 font-mono group-hover:text-blue-400">{rowNum}</span>
                                             </td>
 
                                             <td className="px-4 py-3.5">
@@ -252,41 +247,66 @@ export default function Index() {
                                             </td>
 
                                             <td className="px-4 py-3.5">
-                                                {s.telephone ? (
-                                                    <div className="flex items-center gap-1.5 text-foreground/70 text-xs">
-                                                        <Phone className="h-3 w-3 text-muted-foreground" />
-                                                        {s.telephone}
-                                                    </div>
-                                                ) : <span className="text-muted-foreground/40">—</span>}
+                                                {s.telephone
+                                                    ? <div className="flex items-center gap-1.5 text-foreground/70 text-xs"><Phone className="h-3 w-3 text-muted-foreground" />{s.telephone}</div>
+                                                    : <span className="text-muted-foreground/40">—</span>}
                                             </td>
 
                                             <td className="px-4 py-3.5">
-                                                {s.ville ? (
-                                                    <div className="flex items-center gap-1.5 text-foreground/70 text-xs">
-                                                        <MapPin className="h-3 w-3 text-muted-foreground" />
-                                                        {s.ville}
-                                                    </div>
-                                                ) : <span className="text-muted-foreground/40">—</span>}
+                                                {s.ville
+                                                    ? <div className="flex items-center gap-1.5 text-foreground/70 text-xs"><MapPin className="h-3 w-3 text-muted-foreground" />{s.ville}</div>
+                                                    : <span className="text-muted-foreground/40">—</span>}
                                             </td>
 
+                                            {/* Balance column */}
                                             <td className="px-4 py-3.5">
-                                                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${
-                                                    s.status === 'active'
-                                                        ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
-                                                        : 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800'
-                                                }`}>
-                                                    <span className={`h-1.5 w-1.5 rounded-full ${s.status === 'active' ? 'bg-emerald-500' : 'bg-red-400'}`} />
-                                                    {s.status === 'active' ? 'Actif' : 'Inactif'}
-                                                </span>
+                                                <div className="flex flex-col gap-0.5">
+                                                    {s.balance > 0.005 ? (
+                                                        <>
+                                                            <span className="font-mono font-bold text-sm text-amber-600 dark:text-amber-400">
+                                                                {Number(s.balance).toLocaleString('fr-MA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD
+                                                            </span>
+                                                            <span className="text-[10px] text-amber-500 font-medium">à payer</span>
+                                                        </>
+                                                    ) : s.balance < -0.005 ? (
+                                                        <>
+                                                            <span className="font-mono font-bold text-sm text-blue-600 dark:text-blue-400">
+                                                                {Number(Math.abs(s.balance)).toLocaleString('fr-MA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD
+                                                            </span>
+                                                            <span className="text-[10px] text-blue-500 font-medium">avoir fournisseur</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <span className="font-mono font-bold text-sm text-emerald-600 dark:text-emerald-400">0,00 MAD</span>
+                                                            <span className="text-[10px] text-emerald-500 font-medium">soldé</span>
+                                                        </>
+                                                    )}
+                                                    {s.status === 'inactive' && (
+                                                        <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground bg-muted border border-border/60 w-fit mt-0.5">
+                                                            Inactif
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
 
                                             <td className="px-3 py-3.5" onClick={e => e.stopPropagation()}>
                                                 <div className="flex items-center justify-center gap-1">
-                                                    <button title="Voir"
-                                                        onClick={() => router.visit(`/suppliers/${s.uuid}`)}
-                                                        className="h-7 w-7 rounded-lg hover:bg-accent text-muted-foreground flex items-center justify-center transition-colors">
-                                                        <Eye className="h-3.5 w-3.5" />
+                                                    <button title="Achat"
+                                                        onClick={() => router.visit(`/suppliers/${s.uuid}/purchase`)}
+                                                        className="h-7 w-7 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors">
+                                                        <ShoppingBag className="h-3.5 w-3.5" />
                                                     </button>
+                                                    <button title="Retour"
+                                                        onClick={() => router.visit(`/suppliers/${s.uuid}/return`)}
+                                                        className="h-7 w-7 rounded-lg bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center transition-colors">
+                                                        <RotateCcw className="h-3.5 w-3.5" />
+                                                    </button>
+                                                    <button title="Grand livre"
+                                                        onClick={() => router.visit(`/suppliers/${s.uuid}/ledger`)}
+                                                        className="h-7 w-7 rounded-lg bg-muted hover:bg-accent text-muted-foreground flex items-center justify-center transition-colors">
+                                                        <BookOpen className="h-3.5 w-3.5" />
+                                                    </button>
+                                                    <div className="w-px h-4 bg-border mx-0.5" />
                                                     <button title="Modifier"
                                                         onClick={() => router.visit(`/suppliers/${s.uuid}/edit`)}
                                                         className="h-7 w-7 rounded-lg hover:bg-accent text-muted-foreground flex items-center justify-center transition-colors">
