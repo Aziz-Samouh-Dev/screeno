@@ -132,34 +132,42 @@ class SupplierTransactionController extends Controller
 
         try {
             DB::transaction(function () use ($validated, $supplier) {
+                // Track quantities being returned in this submission per product
+                $inFlight = [];
+
                 foreach ($validated['items'] as $item) {
+                    $pid = (int) $item['product_id'];
+
                     $totalPurchased = SupplierTransaction::where('supplier_id', $supplier->id)
-                        ->where('type', 'F')->where('product_id', $item['product_id'])->sum('quantity');
-                    $totalReturned = SupplierTransaction::where('supplier_id', $supplier->id)
-                        ->where('type', 'R')->where('product_id', $item['product_id'])->sum('quantity');
-                    $available = $totalPurchased - $totalReturned;
+                        ->where('type', 'F')->where('product_id', $pid)->sum('quantity');
+                    $totalReturned  = SupplierTransaction::where('supplier_id', $supplier->id)
+                        ->where('type', 'R')->where('product_id', $pid)->sum('quantity');
+
+                    // Add already-submitted qty for this product in this request
+                    $alreadyThisRequest = $inFlight[$pid] ?? 0;
+                    $available = $totalPurchased - $totalReturned - $alreadyThisRequest;
 
                     if ($item['quantity'] > $available) {
                         $name = SupplierTransaction::where('supplier_id', $supplier->id)
-                            ->where('product_id', $item['product_id'])->value('product_name') ?? 'inconnu';
+                            ->where('product_id', $pid)->value('product_name') ?? 'inconnu';
                         throw new \Exception(
-                            "Quantité trop élevée pour « {$name} » — max retournable : {$available}, demandé : {$item['quantity']}."
+                            "Quantité trop élevée pour « {$name} » — max retournable : {$available}."
                         );
                     }
 
-                    $avgPrice    = (float) SupplierTransaction::where('supplier_id', $supplier->id)
-                        ->where('type', 'F')->where('product_id', $item['product_id'])->avg('unit_price');
-                    $productName = SupplierTransaction::where('supplier_id', $supplier->id)
-                        ->where('product_id', $item['product_id'])->value('product_name') ?? 'Produit';
-                    $returnType  = $item['return_type'];
+                    $inFlight[$pid] = $alreadyThisRequest + $item['quantity'];
 
-                    $totalPrice = $returnType === 'refund'
-                        ? round($avgPrice * $item['quantity'], 2) : 0;
+                    $avgPrice    = (float) SupplierTransaction::where('supplier_id', $supplier->id)
+                        ->where('type', 'F')->where('product_id', $pid)->avg('unit_price');
+                    $productName = SupplierTransaction::where('supplier_id', $supplier->id)
+                        ->where('product_id', $pid)->value('product_name') ?? 'Produit';
+                    $returnType  = $item['return_type'];
+                    $totalPrice  = $returnType === 'refund' ? round($avgPrice * $item['quantity'], 2) : 0;
 
                     SupplierTransaction::create([
                         'supplier_id'  => $supplier->id,
                         'type'         => 'R',
-                        'product_id'   => $item['product_id'],
+                        'product_id'   => $pid,
                         'product_name' => $productName,
                         'quantity'     => $item['quantity'],
                         'unit_price'   => round($avgPrice, 2),
@@ -169,7 +177,7 @@ class SupplierTransactionController extends Controller
                     ]);
 
                     if ($returnType === 'refund' || $returnType === 'loss') {
-                        Produit::find($item['product_id'])?->decrement('stock_quantity', $item['quantity']);
+                        Produit::find($pid)?->decrement('stock_quantity', $item['quantity']);
                     }
                 }
             });

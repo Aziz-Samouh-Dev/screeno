@@ -82,43 +82,36 @@ class SupplierController extends Controller
 
     public function show(Supplier $supplier)
     {
-        $transactions = SupplierTransaction::where('supplier_id', $supplier->id)
-            ->orderBy('created_at', 'desc')->take(10)->get();
+        $allTxns = SupplierTransaction::where('supplier_id', $supplier->id)
+            ->orderBy('created_at', 'asc')->get();
 
-        $allTxns = SupplierTransaction::where('supplier_id', $supplier->id)->get();
-        $balance = $allTxns->reduce(function ($c, $t) {
-            if ($t->type === 'F') return $c + (float) $t->total_price;
-            if ($t->type === 'P') return $c - (float) $t->total_price;
-            if ($t->type === 'R' && $t->return_type === 'refund') return $c - (float) $t->total_price;
-            return $c;
-        }, 0.0);
-
-        $totalPurchases = $allTxns->where('type', 'F')->sum('total_price');
-        $totalReturns   = $allTxns->where('type', 'R')->sum('total_price');
-        $totalPayments  = $allTxns->where('type', 'P')->sum('total_price');
-
-        $products = Produit::where('supplier_id', $supplier->id)
-            ->select('uuid', 'nom', 'sku', 'purchase_price', 'sale_price', 'stock_quantity', 'stock_alert_threshold', 'image')
-            ->orderBy('nom')->get();
+        $rt   = 0.0;
+        $rows = $allTxns->map(function ($t) use (&$rt) {
+            if ($t->type === 'F') {
+                $rt += (float) $t->total_price;
+            } elseif ($t->type === 'P') {
+                $rt -= (float) $t->total_price;
+            } elseif ($t->type === 'R' && $t->return_type === 'refund') {
+                $rt -= (float) $t->total_price;
+            }
+            return [
+                'uuid'          => $t->uuid,
+                'type'          => $t->type,
+                'return_type'   => $t->return_type,
+                'product_name'  => $t->product_name,
+                'quantity'      => $t->quantity,
+                'unit_price'    => (float) $t->unit_price,
+                'total_price'   => (float) $t->total_price,
+                'running_total' => round($rt, 2),
+                'notes'         => $t->notes,
+                'created_at'    => $t->created_at->toIso8601String(),
+            ];
+        })->reverse()->values();
 
         return Inertia::render('suppliers/Show', [
-            'supplier'       => array_merge(
-                $supplier->only(['uuid', 'nom', 'email', 'telephone', 'adresse', 'ville', 'notes', 'status', 'created_at']),
-                ['balance' => round($balance, 2)]
-            ),
-            'products'       => $products,
-            'totalPurchases' => round($totalPurchases, 2),
-            'totalReturns'   => round($totalReturns, 2),
-            'totalPayments'  => round($totalPayments, 2),
-            'transactions'   => $transactions->map(fn ($t) => [
-                'uuid'         => $t->uuid,
-                'type'         => $t->type,
-                'return_type'  => $t->return_type,
-                'product_name' => $t->product_name,
-                'quantity'     => $t->quantity,
-                'total_price'  => (float) $t->total_price,
-                'created_at'   => $t->created_at->toIso8601String(),
-            ]),
+            'supplier'     => $supplier->only(['uuid', 'nom', 'email', 'telephone', 'adresse', 'ville', 'notes', 'status', 'created_at']),
+            'transactions' => $rows,
+            'balance'      => round($rt, 2),
         ]);
     }
 
