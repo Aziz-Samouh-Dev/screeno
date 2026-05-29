@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Produit;
+use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -114,7 +115,9 @@ class ProduitController extends Controller
      */
     public function create()
     {
-        return Inertia::render('produits/Create');
+        return Inertia::render('produits/Create', [
+            'suppliers' => Supplier::select('id', 'nom')->orderBy('nom')->get(),
+        ]);
     }
 
     /**
@@ -130,6 +133,7 @@ class ProduitController extends Controller
             'sale_price'            => 'required|numeric|min:0',
             'stock_quantity'        => 'required|integer|min:0',
             'stock_alert_threshold' => 'nullable|integer|min:0',
+            'supplier_id'           => 'nullable|integer|exists:suppliers,id',
         ]);
 
         $validated['stock_alert_threshold'] = $validated['stock_alert_threshold'] ?? 10;
@@ -152,7 +156,7 @@ class ProduitController extends Controller
     public function show(Produit $produit)
     {
         return Inertia::render('produits/Show', [
-            'produit' => $produit,
+            'produit' => $produit->load('supplier'),
         ]);
     }
 
@@ -162,7 +166,8 @@ class ProduitController extends Controller
     public function edit(Produit $produit)
     {
         return Inertia::render('produits/Edit', [
-            'produit' => $produit,
+            'produit'   => $produit,
+            'suppliers' => Supplier::select('id', 'nom')->orderBy('nom')->get(),
         ]);
     }
 
@@ -179,6 +184,7 @@ class ProduitController extends Controller
             'sale_price'            => 'required|numeric|min:0',
             'stock_quantity'        => 'required|integer|min:0',
             'stock_alert_threshold' => 'nullable|integer|min:0',
+            'supplier_id'           => 'nullable|integer|exists:suppliers,id',
         ]);
 
         if (!isset($validated['stock_alert_threshold'])) {

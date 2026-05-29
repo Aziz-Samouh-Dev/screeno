@@ -50,6 +50,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/suppliers/{supplier}/purchase', [SupplierTransactionController::class, 'storePurchase'])->name('suppliers.purchase.store');
     Route::get('/suppliers/{supplier}/return',    [SupplierTransactionController::class, 'returnForm'])->name('suppliers.return');
     Route::post('/suppliers/{supplier}/return',   [SupplierTransactionController::class, 'storeReturn'])->name('suppliers.return.store');
+    Route::get('/suppliers/{supplier}/payment',   [SupplierTransactionController::class, 'paymentForm'])->name('suppliers.payment');
+    Route::post('/suppliers/{supplier}/payment',  [SupplierTransactionController::class, 'storePayment'])->name('suppliers.payment.store');
     Route::get('/suppliers/{supplier}/ledger',    [SupplierTransactionController::class, 'ledger'])->name('suppliers.ledger');
 
     Route::resource('suppliers', SupplierController::class);

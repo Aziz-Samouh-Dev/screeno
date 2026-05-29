@@ -1,10 +1,11 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, FieldLabel, FieldError } from '@/components/ui/field';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useForm, Controller } from 'react-hook-form';
@@ -12,7 +13,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import {
     ArrowLeft, Package, Upload, Tag, DollarSign,
-    BarChart3, CheckCircle2, X, TrendingUp,
+    BarChart3, CheckCircle2, X, TrendingUp, Truck,
 } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -28,17 +29,19 @@ const formSchema = z.object({
     sale_price:             z.preprocess(v => Number(v), z.number().min(0, { message: 'Sale price required' })),
     stock_quantity:         z.preprocess(v => Number(v), z.number().min(0, { message: 'Stock quantity required' })),
     stock_alert_threshold:  z.preprocess(v => Number(v), z.number().min(0)),
+    supplier_id:            z.any().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 export default function Create() {
+    const { suppliers } = usePage().props as any;
     const [processing, setProcessing] = useState(false);
     const [preview, setPreview]       = useState<string | null>(null);
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema) as any,
-        defaultValues: { nom: '', description: '', image: null, purchase_price: 0, sale_price: 0, stock_quantity: 0, stock_alert_threshold: 10 },
+        defaultValues: { nom: '', description: '', image: null, purchase_price: 0, sale_price: 0, stock_quantity: 0, stock_alert_threshold: 10, supplier_id: '' },
     });
 
     const watchPurchase = form.watch('purchase_price');
@@ -54,6 +57,7 @@ export default function Create() {
         fd.append('sale_price',             String(values.sale_price));
         fd.append('stock_quantity',         String(values.stock_quantity));
         fd.append('stock_alert_threshold',  String(values.stock_alert_threshold ?? 10));
+        if (values.supplier_id) fd.append('supplier_id', String(values.supplier_id));
         if (values.image) fd.append('image', values.image);
 
         router.post('/produits', fd, {
@@ -166,6 +170,21 @@ export default function Create() {
                                 <Field className="flex flex-col gap-1.5">
                                     <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Description</FieldLabel>
                                     <Textarea className="rounded-xl resize-none h-24" placeholder="Product description…" {...field} />
+                                </Field>
+                            )} />
+                            <Controller control={form.control} name="supplier_id" render={({ field }) => (
+                                <Field className="flex flex-col gap-1.5">
+                                    <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Fournisseur</FieldLabel>
+                                    <Select value={String(field.value || '')} onValueChange={v => field.onChange(v ? Number(v) : null)}>
+                                        <SelectTrigger className="rounded-xl h-10">
+                                            <SelectValue placeholder="Sélectionner un fournisseur" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {suppliers?.map((s: any) => (
+                                                <SelectItem key={s.id} value={String(s.id)}>{s.nom}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </Field>
                             )} />
                         </div>

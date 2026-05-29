@@ -12,14 +12,14 @@ use Inertia\Inertia;
 class SupplierTransactionController extends Controller
 {
     /* ------------------------------------------------------------------ */
-    /*  F — Purchase (Facture)                                              */
+    /*  F — Purchase                                                        */
     /* ------------------------------------------------------------------ */
 
     public function purchaseForm(Supplier $supplier)
     {
         return Inertia::render('suppliers/Purchase', [
             'supplier' => $supplier->only(['uuid', 'nom', 'telephone']),
-            'products' => Produit::select('id', 'nom', 'purchase_price', 'stock_quantity', 'stock_alert_threshold', 'supplier_id')
+            'products' => Produit::select('id', 'nom', 'purchase_price', 'sale_price', 'stock_quantity', 'stock_alert_threshold')
                 ->orderBy('nom')->get(),
         ]);
     }
@@ -27,17 +27,35 @@ class SupplierTransactionController extends Controller
     public function storePurchase(Request $request, Supplier $supplier)
     {
         $validated = $request->validate([
-            'items'              => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:produits,id',
-            'items.*.quantity'   => 'required|integer|min:1',
-            'items.*.unit_price' => 'required|numeric|min:0',
-            'notes'              => 'nullable|string',
+            'items'                     => 'required|array|min:1',
+            'items.*.product_id'        => 'required|integer',
+            'items.*.quantity'          => 'required|integer|min:1',
+            'items.*.unit_price'        => 'required|numeric|min:0',
+            'items.*.is_new'            => 'nullable|boolean',
+            'items.*.product_name'      => 'required_if:items.*.is_new,true|string|max:255',
+            'items.*.sale_price'        => 'required_if:items.*.is_new,true|numeric|min:0',
+            'items.*.stock_alert_threshold' => 'nullable|integer|min:0',
+            'notes'                     => 'nullable|string',
         ]);
 
         try {
             DB::transaction(function () use ($validated, $supplier) {
                 foreach ($validated['items'] as $item) {
-                    $product = Produit::findOrFail($item['product_id']);
+                    if (!empty($item['is_new'])) {
+                        $product = Produit::create([
+                            'nom'                   => $item['product_name'],
+                            'purchase_price'         => $item['unit_price'],
+                            'sale_price'             => $item['sale_price'],
+                            'stock_quantity'         => 0,
+                            'stock_alert_threshold'  => $item['stock_alert_threshold'] ?? 10,
+                            'supplier_id'            => $supplier->id,
+                        ]);
+                    } else {
+                        $product = Produit::findOrFail($item['product_id']);
+                        if (is_null($product->supplier_id)) {
+                            $product->update(['supplier_id' => $supplier->id]);
+                        }
+                    }
 
                     SupplierTransaction::create([
                         'supplier_id'  => $supplier->id,
@@ -50,17 +68,11 @@ class SupplierTransactionController extends Controller
                         'notes'        => $validated['notes'] ?? null,
                     ]);
 
-                    // Receiving stock from supplier
                     $product->increment('stock_quantity', $item['quantity']);
-
-                    // Auto-link product to this supplier if not yet linked
-                    if (is_null($product->supplier_id)) {
-                        $product->update(['supplier_id' => $supplier->id]);
-                    }
                 }
             });
         } catch (\Exception $e) {
-            return back()->withErrors(['purchase_error' => $e->getMessage()]);
+            return redirect()->back()->withInput()->withErrors(['purchase_error' => $e->getMessage()]);
         }
 
         return redirect()->route('suppliers.ledger', $supplier)
@@ -68,12 +80,11 @@ class SupplierTransactionController extends Controller
     }
 
     /* ------------------------------------------------------------------ */
-    /*  R — Return to Supplier                                              */
+    /*  R — Return                                                          */
     /* ------------------------------------------------------------------ */
 
     public function returnForm(Supplier $supplier)
     {
-        // Products purchased from this supplier with remaining returnable qty
         $purchases = SupplierTransaction::where('supplier_id', $supplier->id)
             ->where('type', 'F')->whereNotNull('product_id')->get();
 
@@ -132,7 +143,7 @@ class SupplierTransactionController extends Controller
                         $name = SupplierTransaction::where('supplier_id', $supplier->id)
                             ->where('product_id', $item['product_id'])->value('product_name') ?? 'inconnu';
                         throw new \Exception(
-                            "Quantité trop élevée pour « {$name} » — max retournable : {$available}."
+                            "Quantité trop élevée pour « {$name} » — max retournable : {$available}, demandé : {$item['quantity']}."
                         );
                     }
 
@@ -142,10 +153,8 @@ class SupplierTransactionController extends Controller
                         ->where('product_id', $item['product_id'])->value('product_name') ?? 'Produit';
                     $returnType  = $item['return_type'];
 
-                    // Financial impact: only 'refund' reduces what we owe the supplier
                     $totalPrice = $returnType === 'refund'
-                        ? round($avgPrice * $item['quantity'], 2)
-                        : 0;
+                        ? round($avgPrice * $item['quantity'], 2) : 0;
 
                     SupplierTransaction::create([
                         'supplier_id'  => $supplier->id,
@@ -159,14 +168,9 @@ class SupplierTransactionController extends Controller
                         'notes'        => $validated['notes'] ?? null,
                     ]);
 
-                    // Stock impact:
-                    // change = give damaged back, receive new → net 0
-                    // refund = we give product back → stock decreases
-                    // loss   = product gone, supplier refused → stock decreases
                     if ($returnType === 'refund' || $returnType === 'loss') {
                         Produit::find($item['product_id'])?->decrement('stock_quantity', $item['quantity']);
                     }
-                    // 'change': no stock change (return damaged, receive new same product)
                 }
             });
         } catch (\Exception $e) {
@@ -175,6 +179,94 @@ class SupplierTransactionController extends Controller
 
         return redirect()->route('suppliers.ledger', $supplier)
             ->with('success', 'Retour enregistré avec succès.');
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  P — Payment                                                         */
+    /* ------------------------------------------------------------------ */
+
+    public function paymentForm(Supplier $supplier)
+    {
+        $txns = SupplierTransaction::where('supplier_id', $supplier->id)
+            ->whereNotNull('product_id')->get();
+
+        $outstandingItems = $txns->groupBy('product_id')
+            ->map(function ($productTxns) {
+                $purchased = (float) $productTxns->where('type', 'F')->sum('total_price');
+                $returned  = (float) $productTxns->where('type', 'R')->sum('total_price');
+                $paid      = (float) $productTxns->where('type', 'P')->sum('total_price');
+                $owed      = $purchased - $returned - $paid;
+
+                if ($owed < 0.01) return null;
+
+                $firstName = $productTxns->where('type', 'F')->first();
+                return [
+                    'product_id'   => (int) $productTxns->first()->product_id,
+                    'product_name' => $firstName ? $firstName->product_name : $productTxns->first()->product_name,
+                    'amount_owed'  => round($owed, 2),
+                ];
+            })->filter()->values();
+
+        $allTxns = SupplierTransaction::where('supplier_id', $supplier->id)->get();
+        $balance = $allTxns->reduce(function ($c, $t) {
+            if ($t->type === 'F') return $c + (float) $t->total_price;
+            if ($t->type === 'R' && $t->return_type === 'refund') return $c - (float) $t->total_price;
+            return $c;
+        }, 0.0);
+
+        $paymentMethods = \App\Models\PaymentMethod::where('is_active', true)
+            ->orderBy('name')->get(['id', 'name', 'code']);
+
+        return Inertia::render('suppliers/Payment', [
+            'supplier'         => $supplier->only(['uuid', 'nom', 'telephone']),
+            'balance'          => round($balance, 2),
+            'outstandingItems' => $outstandingItems,
+            'paymentMethods'   => $paymentMethods,
+        ]);
+    }
+
+    public function storePayment(Request $request, Supplier $supplier)
+    {
+        $validated = $request->validate([
+            'payments'                => 'required|array|min:1',
+            'payments.*.product_id'   => 'required|integer',
+            'payments.*.product_name' => 'required|string',
+            'payments.*.amount'       => 'required|numeric|min:0.01',
+            'reference'               => 'nullable|string|max:255',
+            'notes'                   => 'nullable|string',
+        ]);
+
+        $allTxns = SupplierTransaction::where('supplier_id', $supplier->id)->get();
+        $balance = $allTxns->reduce(function ($c, $t) {
+            if ($t->type === 'F') return $c + (float) $t->total_price;
+            if ($t->type === 'R' && $t->return_type === 'refund') return $c - (float) $t->total_price;
+            return $c;
+        }, 0.0);
+
+        $totalPaying = array_sum(array_column($validated['payments'], 'amount'));
+        if (round($totalPaying, 2) > round($balance, 2) + 0.01) {
+            return back()->withErrors([
+                'payment_error' => 'Le total à payer (' . number_format($totalPaying, 2) . ') dépasse le solde dû (' . number_format($balance, 2) . ' MAD).',
+            ]);
+        }
+
+        foreach ($validated['payments'] as $item) {
+            $label = $validated['reference']
+                ? $item['product_name'] . ' — ' . $validated['reference']
+                : $item['product_name'];
+
+            SupplierTransaction::create([
+                'supplier_id'  => $supplier->id,
+                'type'         => 'P',
+                'product_id'   => $item['product_id'],
+                'product_name' => $label,
+                'total_price'  => $item['amount'],
+                'notes'        => $validated['notes'] ?? null,
+            ]);
+        }
+
+        return redirect()->route('suppliers.ledger', $supplier)
+            ->with('success', count($validated['payments']) . ' paiement(s) enregistré(s) avec succès.');
     }
 
     /* ------------------------------------------------------------------ */
@@ -193,10 +285,11 @@ class SupplierTransactionController extends Controller
 
         $rt = 0.0;
         $rows = $transactions->map(function ($t) use (&$rt) {
-            // F = we owe more; R/refund = we owe less; change/loss = no financial change
             if ($t->type === 'F') {
                 $rt += (float) $t->total_price;
             } elseif ($t->type === 'R' && $t->return_type === 'refund') {
+                $rt -= (float) $t->total_price;
+            } elseif ($t->type === 'P') {
                 $rt -= (float) $t->total_price;
             }
             return [
@@ -213,9 +306,13 @@ class SupplierTransactionController extends Controller
             ];
         })->reverse()->values();
 
-        // Overall balance (unfiltered)
         $allTxns = SupplierTransaction::where('supplier_id', $supplier->id)->get();
-        $balance = $this->computeBalance($allTxns);
+        $balance = $allTxns->reduce(function ($c, $t) {
+            if ($t->type === 'F') return $c + (float) $t->total_price;
+            if ($t->type === 'P') return $c - (float) $t->total_price;
+            if ($t->type === 'R' && $t->return_type === 'refund') return $c - (float) $t->total_price;
+            return $c;
+        }, 0.0);
 
         return Inertia::render('suppliers/Ledger', [
             'supplier'     => $supplier->only(['uuid', 'nom', 'email', 'telephone', 'ville']),
@@ -226,14 +323,5 @@ class SupplierTransactionController extends Controller
                 'date_to'   => $request->date_to   ?? '',
             ],
         ]);
-    }
-
-    private function computeBalance($txns): float
-    {
-        return $txns->reduce(function ($carry, $t) {
-            if ($t->type === 'F') return $carry + (float) $t->total_price;
-            if ($t->type === 'R' && $t->return_type === 'refund') return $carry - (float) $t->total_price;
-            return $carry;
-        }, 0.0);
     }
 }

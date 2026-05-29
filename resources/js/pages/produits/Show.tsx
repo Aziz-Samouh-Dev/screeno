@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import {
     ArrowLeft, Edit2, Trash2, Package, Tag, Copy, Check,
-    TrendingUp, BarChart3, Calendar, Clock, ImageOff, X,
+    TrendingUp, BarChart3, Calendar, Clock, ImageOff, X, Truck,
 } from 'lucide-react';
 import { useState } from 'react';
+
+interface Supplier { id: number; uuid: string; nom: string; }
 
 interface Produit {
     uuid: string;
@@ -19,6 +21,7 @@ interface Produit {
     sale_price: number;
     stock_quantity: number;
     stock_alert_threshold: number;
+    supplier?: Supplier | null;
     created_at: string;
     updated_at: string;
 }
@@ -190,6 +193,19 @@ export default function Show({ produit }: Props) {
                                 <BarChart3 className="h-4 w-4 text-muted-foreground" /> Infos produit
                             </h3>
                             <div className="space-y-3">
+                                {produit.supplier && (
+                                    <div className="flex items-center justify-between text-sm">
+                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                            <Truck className="h-4 w-4" />
+                                            <span>Fournisseur</span>
+                                        </div>
+                                        <button
+                                            onClick={() => router.visit(`/suppliers/${produit.supplier!.uuid}`)}
+                                            className="font-medium text-blue-600 dark:text-blue-400 hover:underline">
+                                            {produit.supplier.nom}
+                                        </button>
+                                    </div>
+                                )}
                                 <div className="flex items-center justify-between text-sm">
                                     <div className="flex items-center gap-2 text-muted-foreground">
                                         <Calendar className="h-4 w-4" />

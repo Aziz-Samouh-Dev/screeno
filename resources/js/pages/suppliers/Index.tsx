@@ -3,9 +3,9 @@ import { Head, Link, usePage, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import {
-    ChevronLeft, ChevronRight, Plus, Truck, UserCheck, UserX,
-    Search, ArrowUpDown, Trash2, Download, Pencil,
-    SlidersHorizontal, X, Phone, MapPin,
+    ChevronRight, ChevronLeft, Plus, Truck, UserCheck, UserX,
+    Search, ArrowUpDown, Trash2, Download, Pencil, X,
+    CreditCard, SlidersHorizontal,
     ShoppingBag, RotateCcw, BookOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,14 +16,14 @@ import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog'
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Fournisseurs', href: '/suppliers' }];
 
 interface Supplier {
-    uuid: string; nom: string; email: string;
-    telephone: string | null; ville: string | null;
+    uuid: string; nom: string; email?: string | null;
+    telephone: string; ville?: string | null;
     status: 'active' | 'inactive';
     balance: number;
 }
 interface PaginatedData {
     total: ReactNode; data: Supplier[];
-    current_page: number; last_page: number; per_page: number;
+    current_page: number; last_page: number; per_page: number; from: number; to: number;
 }
 interface Props {
     suppliers: PaginatedData;
@@ -31,7 +31,31 @@ interface Props {
     filters: { search?: string; status?: string; sort?: string; per_page?: string };
 }
 
-const initials = (n: string) => n.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+const COLORS = [
+    'bg-blue-100 text-blue-700', 'bg-indigo-100 text-indigo-700',
+    'bg-emerald-100 text-emerald-700', 'bg-amber-100 text-amber-700',
+    'bg-rose-100 text-rose-700', 'bg-cyan-100 text-cyan-700',
+];
+const initials  = (n: string) => n.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+const avatarClr = (n: string) => COLORS[n.charCodeAt(0) % COLORS.length];
+
+function DonutChart({ active, inactive }: { active: number; inactive: number }) {
+    const total = active + inactive || 1;
+    const pct   = active / total;
+    const r = 28, cx = 36, cy = 36, sw = 8;
+    const circ = 2 * Math.PI * r;
+    return (
+        <svg width="72" height="72" viewBox="0 0 72 72">
+            <circle cx={cx} cy={cy} r={r} fill="none" stroke="#e2e8f0" strokeWidth={sw} />
+            <circle cx={cx} cy={cy} r={r} fill="none" stroke="#3b82f6" strokeWidth={sw}
+                strokeDasharray={`${pct * circ} ${circ}`} strokeDashoffset={circ / 4}
+                strokeLinecap="round" />
+            <text x={cx} y={cy + 4} textAnchor="middle" fontSize="10" fontWeight="700" fill="currentColor" className="fill-foreground">
+                {Math.round(pct * 100)}%
+            </text>
+        </svg>
+    );
+}
 
 export default function Index() {
     const { suppliers, filters, globalStats } = usePage().props as unknown as Props;
@@ -44,6 +68,23 @@ export default function Index() {
 
     const { confirmState, confirm, closeConfirm } = useConfirmDialog();
 
+    const [paymentModal,      setPaymentModal]      = useState<{ uuid: string; nom: string } | null>(null);
+    const [paymentAmount,     setPaymentAmount]     = useState('');
+    const [paymentNotes,      setPaymentNotes]      = useState('');
+    const [paymentProcessing, setPaymentProcessing] = useState(false);
+
+    const openPayment = (s: Supplier) => {
+        setPaymentModal({ uuid: s.uuid, nom: s.nom });
+        setPaymentAmount(''); setPaymentNotes('');
+    };
+    const submitPayment = () => {
+        if (!paymentModal || !paymentAmount) return;
+        setPaymentProcessing(true);
+        router.post(`/suppliers/${paymentModal.uuid}/payment`,
+            { payments: [{ product_id: 0, product_name: 'Paiement fournisseur', amount: parseFloat(paymentAmount) }], notes: paymentNotes },
+            { onFinish: () => { setPaymentModal(null); setPaymentProcessing(false); } });
+    };
+
     const go = (extra: object = {}) =>
         router.get('/suppliers',
             { search, status: status === 'all' ? undefined : status, sort, per_page: perPage, ...extra },
@@ -51,7 +92,8 @@ export default function Index() {
 
     const handleSort = (field: string) => {
         const dir = sort === `${field}_asc` ? 'desc' : 'asc';
-        const s = `${field}_${dir}`; setSort(s); go({ sort: s });
+        setSort(`${field}_${dir}`);
+        go({ sort: `${field}_${dir}` });
     };
 
     useEffect(() => {
@@ -62,7 +104,7 @@ export default function Index() {
     const handleDelete = (uuid: string, nom: string) => {
         confirm({
             title: 'Supprimer ce fournisseur ?',
-            description: `« ${nom} » sera définitivement supprimé.`,
+            description: `« ${nom} » et toutes ses données seront supprimés définitivement.`,
             onConfirm: () => {
                 setProcessing(true);
                 router.delete(`/suppliers/${uuid}`, {
@@ -75,14 +117,14 @@ export default function Index() {
     const SortBtn = ({ field, label }: { field: string; label: string }) => (
         <button type="button" className="flex items-center gap-1 group" onClick={() => handleSort(field)}>
             {label}
-            <ArrowUpDown className={`h-3 w-3 transition-opacity ${sort.startsWith(field) ? 'opacity-100 text-indigo-500' : 'opacity-30 group-hover:opacity-60'}`} />
+            <ArrowUpDown className={`h-3 w-3 transition-opacity ${sort.startsWith(field) ? 'opacity-100 text-blue-500' : 'opacity-30 group-hover:opacity-60'}`} />
         </button>
     );
 
-    const total       = globalStats.totalSuppliers;
     const active      = globalStats.activeSuppliers;
     const inactive    = globalStats.inactiveSuppliers;
-    const activePct   = total > 0 ? Math.round((active   / total) * 100) : 0;
+    const total       = globalStats.totalSuppliers;
+    const activePct   = total > 0 ? Math.round((active / total) * 100) : 0;
     const inactivePct = total > 0 ? Math.round((inactive / total) * 100) : 0;
 
     const from = suppliers.data.length > 0 ? ((suppliers.current_page - 1) * Number(perPage)) + 1 : 0;
@@ -91,6 +133,52 @@ export default function Index() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Fournisseurs" />
+
+            {/* Payment modal */}
+            {paymentModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+                    onClick={() => setPaymentModal(null)}>
+                    <div className="bg-card rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6 space-y-4"
+                        onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40">
+                                    <CreditCard className="h-4 w-4 text-emerald-600" />
+                                </div>
+                                <div>
+                                    <h2 className="font-bold text-foreground text-sm">Payer un fournisseur</h2>
+                                    <p className="text-xs text-muted-foreground">{paymentModal.nom}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setPaymentModal(null)} className="rounded-lg p-1.5 hover:bg-accent">
+                                <X className="h-4 w-4 text-muted-foreground" />
+                            </button>
+                        </div>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Montant *</label>
+                                <Input type="number" step="0.01" min="0.01" placeholder="0.00"
+                                    value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)}
+                                    className="h-10 rounded-lg text-right font-mono" autoFocus />
+                            </div>
+                            <div>
+                                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Notes (optionnel)</label>
+                                <textarea value={paymentNotes} onChange={e => setPaymentNotes(e.target.value)}
+                                    rows={2} placeholder="Référence, mode de paiement…"
+                                    className="w-full rounded-lg border border-border bg-card text-foreground px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-200" />
+                            </div>
+                        </div>
+                        <div className="flex gap-2 pt-1">
+                            <Button variant="outline" className="flex-1 rounded-lg" onClick={() => setPaymentModal(null)}>Annuler</Button>
+                            <Button className="flex-1 rounded-lg bg-emerald-600 hover:bg-emerald-700"
+                                disabled={!paymentAmount || paymentProcessing} onClick={submitPayment}>
+                                <CreditCard className="h-4 w-4 mr-1.5" />
+                                {paymentProcessing ? 'En cours…' : 'Confirmer'}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <ConfirmDialog open={confirmState.open} onOpenChange={closeConfirm}
                 title={confirmState.title} description={confirmState.description}
@@ -101,12 +189,12 @@ export default function Index() {
                 {/* ── Header ── */}
                 <div className="flex items-center justify-between flex-wrap gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
-                            <Truck className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/60">
+                            <Truck className="h-5 w-5 text-blue-600" />
                         </div>
                         <div>
                             <h1 className="text-xl font-bold text-foreground">Fournisseurs</h1>
-                            <p className="text-sm text-muted-foreground mt-0.5">Gérez vos partenaires fournisseurs</p>
+                            <p className="text-sm text-muted-foreground mt-0.5">Gérez votre portefeuille fournisseurs</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -124,42 +212,45 @@ export default function Index() {
 
                 {/* ── Stat cards ── */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="bg-card rounded-xl border border-border shadow-sm p-5">
-                        <div className="p-2 rounded-lg bg-muted w-fit mb-3">
-                            <Truck className="h-4 w-4 text-muted-foreground" />
+                    <div className="bg-card rounded-xl border border-border shadow-sm p-5 flex items-center gap-4">
+                        <div className="flex-1">
+                            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Total fournisseurs</p>
+                            <p className="text-3xl font-bold text-foreground mt-1 leading-none">{total}</p>
+                            <p className="text-xs text-muted-foreground mt-1.5">portefeuille complet</p>
                         </div>
-                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Total fournisseurs</p>
-                        <p className="text-3xl font-bold text-foreground mt-1 leading-none">{total}</p>
+                        <DonutChart active={active} inactive={inactive} />
                     </div>
-                    <div className="bg-card rounded-xl border border-emerald-100 dark:border-emerald-900 shadow-sm p-5">
+
+                    <div className="bg-card rounded-xl border border-emerald-100 dark:border-emerald-900/60 shadow-sm p-5">
                         <div className="flex items-center justify-between mb-3">
-                            <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30">
-                                <UserCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                            <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40">
+                                <UserCheck className="h-4 w-4 text-emerald-600" />
                             </div>
-                            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full">{activePct}%</span>
+                            <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full">{activePct}%</span>
                         </div>
-                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Actifs</p>
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Fournisseurs actifs</p>
                         <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-400 mt-1 leading-none">{active}</p>
-                        <div className="mt-3 h-1.5 bg-emerald-100 dark:bg-emerald-950/40 rounded-full overflow-hidden">
-                            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${activePct}%` }} />
+                        <div className="mt-3 h-1.5 bg-emerald-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${activePct}%` }} />
                         </div>
                     </div>
-                    <div className="bg-card rounded-xl border border-red-100 dark:border-red-900 shadow-sm p-5">
+
+                    <div className="bg-card rounded-xl border border-red-100 dark:border-red-900/60 shadow-sm p-5">
                         <div className="flex items-center justify-between mb-3">
-                            <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/30">
-                                <UserX className="h-4 w-4 text-red-500 dark:text-red-400" />
+                            <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/40">
+                                <UserX className="h-4 w-4 text-red-500" />
                             </div>
-                            <span className="text-xs font-semibold text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-2 py-0.5 rounded-full">{inactivePct}%</span>
+                            <span className="text-xs font-semibold text-red-500 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded-full">{inactivePct}%</span>
                         </div>
-                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Inactifs</p>
+                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Fournisseurs inactifs</p>
                         <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-1 leading-none">{inactive}</p>
-                        <div className="mt-3 h-1.5 bg-red-100 dark:bg-red-950/40 rounded-full overflow-hidden">
-                            <div className="h-full bg-red-400 rounded-full" style={{ width: `${inactivePct}%` }} />
+                        <div className="mt-3 h-1.5 bg-red-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-red-400 rounded-full transition-all" style={{ width: `${inactivePct}%` }} />
                         </div>
                     </div>
                 </div>
 
-                {/* ── Table ── */}
+                {/* ── Table card ── */}
                 <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
 
                     {/* Toolbar */}
@@ -171,23 +262,25 @@ export default function Index() {
                                 value={search} onChange={e => setSearch(e.target.value)} />
                             {search && (
                                 <button onClick={() => setSearch('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground/90">
                                     <X className="h-3.5 w-3.5" />
                                 </button>
                             )}
                         </div>
-                        <div className="flex items-center gap-1.5 border border-border rounded-lg px-2.5 py-1.5 bg-card">
-                            <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
-                            <Select value={status} onValueChange={setStatus}>
-                                <SelectTrigger className="border-0 p-0 h-auto text-xs font-medium text-foreground shadow-none focus:ring-0 w-32">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">Tous les statuts</SelectItem>
-                                    <SelectItem value="active">Actifs seulement</SelectItem>
-                                    <SelectItem value="inactive">Inactifs seulement</SelectItem>
-                                </SelectContent>
-                            </Select>
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5 border border-border rounded-lg px-2.5 py-1.5 bg-card">
+                                <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
+                                <Select value={status} onValueChange={setStatus}>
+                                    <SelectTrigger className="border-0 p-0 h-auto text-xs font-medium text-foreground/90 shadow-none focus:ring-0 w-32">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Tous les statuts</SelectItem>
+                                        <SelectItem value="active">Actifs seulement</SelectItem>
+                                        <SelectItem value="inactive">Inactifs seulement</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
                         <div className="sm:ml-auto text-xs text-muted-foreground font-medium">
                             {suppliers.total} fournisseur{Number(suppliers.total) !== 1 ? 's' : ''}
@@ -201,11 +294,15 @@ export default function Index() {
                                 <tr>
                                     <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-10">#</th>
                                     <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                                        <SortBtn field="nom" label="Fournisseur" />
+                                        <SortBtn field="name" label="Fournisseur" />
                                     </th>
                                     <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Téléphone</th>
-                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Ville</th>
-                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Solde / Statut</th>
+                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                        <SortBtn field="city" label="Ville" />
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                        Solde / Statut
+                                    </th>
                                     <th className="px-4 py-3 text-center text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
@@ -213,8 +310,8 @@ export default function Index() {
                                 {suppliers.data.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} className="px-4 py-20 text-center">
-                                            <div className="flex flex-col items-center gap-2">
-                                                <Truck className="h-12 w-12 text-muted-foreground/20" />
+                                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                                <Truck className="h-12 w-12 opacity-30" />
                                                 <p className="font-medium text-muted-foreground">Aucun fournisseur trouvé</p>
                                                 {search
                                                     ? <button onClick={() => setSearch('')} className="text-xs text-blue-500 hover:underline">Effacer la recherche</button>
@@ -227,16 +324,16 @@ export default function Index() {
                                     const rowNum = ((suppliers.current_page - 1) * Number(perPage)) + idx + 1;
                                     return (
                                         <tr key={s.uuid}
-                                            className="hover:bg-blue-50/30 dark:hover:bg-blue-950/20 transition-colors cursor-pointer group"
+                                            className="hover:bg-blue-50/30 dark:hover:bg-blue-950/30 transition-colors cursor-pointer group"
                                             onClick={() => router.visit(`/suppliers/${s.uuid}`)}>
 
                                             <td className="px-4 py-3.5">
-                                                <span className="text-xs text-muted-foreground/40 font-mono group-hover:text-blue-400">{rowNum}</span>
+                                                <span className="text-xs text-muted-foreground/50 font-mono group-hover:text-blue-300">{rowNum}</span>
                                             </td>
 
                                             <td className="px-4 py-3.5">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">
+                                                    <div className={`h-8 w-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${avatarClr(s.nom)}`}>
                                                         {initials(s.nom)}
                                                     </div>
                                                     <div>
@@ -246,19 +343,9 @@ export default function Index() {
                                                 </div>
                                             </td>
 
-                                            <td className="px-4 py-3.5">
-                                                {s.telephone
-                                                    ? <div className="flex items-center gap-1.5 text-foreground/70 text-xs"><Phone className="h-3 w-3 text-muted-foreground" />{s.telephone}</div>
-                                                    : <span className="text-muted-foreground/40">—</span>}
-                                            </td>
+                                            <td className="px-4 py-3.5 text-muted-foreground font-mono text-xs">{s.telephone || '—'}</td>
+                                            <td className="px-4 py-3.5 text-muted-foreground text-xs">{s.ville || '—'}</td>
 
-                                            <td className="px-4 py-3.5">
-                                                {s.ville
-                                                    ? <div className="flex items-center gap-1.5 text-foreground/70 text-xs"><MapPin className="h-3 w-3 text-muted-foreground" />{s.ville}</div>
-                                                    : <span className="text-muted-foreground/40">—</span>}
-                                            </td>
-
-                                            {/* Balance column */}
                                             <td className="px-4 py-3.5">
                                                 <div className="flex flex-col gap-0.5">
                                                     {s.balance > 0.005 ? (
@@ -301,6 +388,11 @@ export default function Index() {
                                                         className="h-7 w-7 rounded-lg bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center transition-colors">
                                                         <RotateCcw className="h-3.5 w-3.5" />
                                                     </button>
+                                                    <button title="Paiement"
+                                                        onClick={() => openPayment(s)}
+                                                        className="h-7 w-7 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center transition-colors">
+                                                        <CreditCard className="h-3.5 w-3.5" />
+                                                    </button>
                                                     <button title="Grand livre"
                                                         onClick={() => router.visit(`/suppliers/${s.uuid}/ledger`)}
                                                         className="h-7 w-7 rounded-lg bg-muted hover:bg-accent text-muted-foreground flex items-center justify-center transition-colors">
@@ -342,7 +434,7 @@ export default function Index() {
                                 </Select>
                             </div>
                             <span className="text-xs text-muted-foreground">
-                                Page <span className="font-semibold text-foreground">{suppliers.current_page}</span> / <span className="font-semibold text-foreground">{suppliers.last_page}</span>
+                                Page <span className="font-semibold text-foreground/90">{suppliers.current_page}</span> / <span className="font-semibold text-foreground/90">{suppliers.last_page}</span>
                             </span>
                             <div className="flex gap-1">
                                 <Button variant="outline" size="icon" className="h-7 w-7 rounded-lg"

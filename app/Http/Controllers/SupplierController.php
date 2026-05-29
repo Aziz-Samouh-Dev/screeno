@@ -20,7 +20,8 @@ class SupplierController extends Controller
         $suppliers = Supplier::query()
             ->selectRaw("suppliers.*, ROUND(
                 COALESCE((SELECT SUM(total_price) FROM supplier_transactions WHERE supplier_id = suppliers.id AND type = 'F'), 0) -
-                COALESCE((SELECT SUM(total_price) FROM supplier_transactions WHERE supplier_id = suppliers.id AND type = 'R' AND return_type = 'refund'), 0)
+                COALESCE((SELECT SUM(total_price) FROM supplier_transactions WHERE supplier_id = suppliers.id AND type = 'R' AND return_type = 'refund'), 0) -
+                COALESCE((SELECT SUM(total_price) FROM supplier_transactions WHERE supplier_id = suppliers.id AND type = 'P'), 0)
             , 2) as balance")
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
@@ -87,21 +88,29 @@ class SupplierController extends Controller
         $allTxns = SupplierTransaction::where('supplier_id', $supplier->id)->get();
         $balance = $allTxns->reduce(function ($c, $t) {
             if ($t->type === 'F') return $c + (float) $t->total_price;
+            if ($t->type === 'P') return $c - (float) $t->total_price;
             if ($t->type === 'R' && $t->return_type === 'refund') return $c - (float) $t->total_price;
             return $c;
         }, 0.0);
+
+        $totalPurchases = $allTxns->where('type', 'F')->sum('total_price');
+        $totalReturns   = $allTxns->where('type', 'R')->sum('total_price');
+        $totalPayments  = $allTxns->where('type', 'P')->sum('total_price');
 
         $products = Produit::where('supplier_id', $supplier->id)
             ->select('uuid', 'nom', 'sku', 'purchase_price', 'sale_price', 'stock_quantity', 'stock_alert_threshold', 'image')
             ->orderBy('nom')->get();
 
         return Inertia::render('suppliers/Show', [
-            'supplier'     => array_merge(
+            'supplier'       => array_merge(
                 $supplier->only(['uuid', 'nom', 'email', 'telephone', 'adresse', 'ville', 'notes', 'status', 'created_at']),
                 ['balance' => round($balance, 2)]
             ),
-            'products'     => $products,
-            'transactions' => $transactions->map(fn ($t) => [
+            'products'       => $products,
+            'totalPurchases' => round($totalPurchases, 2),
+            'totalReturns'   => round($totalReturns, 2),
+            'totalPayments'  => round($totalPayments, 2),
+            'transactions'   => $transactions->map(fn ($t) => [
                 'uuid'         => $t->uuid,
                 'type'         => $t->type,
                 'return_type'  => $t->return_type,

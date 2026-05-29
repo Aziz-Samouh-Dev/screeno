@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, FieldLabel, FieldError } from '@/components/ui/field';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useForm, Controller } from 'react-hook-form';
@@ -12,7 +13,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import {
     ArrowLeft, Package, Upload, DollarSign,
-    BarChart3, Save, Eye, X, TrendingUp, Tag,
+    BarChart3, Save, Eye, X, TrendingUp, Tag, Truck,
 } from 'lucide-react';
 
 const formSchema = z.object({
@@ -23,12 +24,13 @@ const formSchema = z.object({
     sale_price:            z.preprocess(v => Number(v), z.number().min(0)),
     stock_quantity:        z.preprocess(v => Number(v), z.number().min(0)),
     stock_alert_threshold: z.preprocess(v => Number(v), z.number().min(0)),
+    supplier_id:           z.any().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 export default function Edit() {
-    const { produit } = usePage().props as any;
+    const { produit, suppliers } = usePage().props as any;
     const [processing, setProcessing] = useState(false);
     const [preview, setPreview]       = useState<string | null>(produit.image ? `/storage/${produit.image}` : null);
     const [removeImage, setRemoveImage] = useState(false);
@@ -49,6 +51,7 @@ export default function Edit() {
             sale_price:            produit.sale_price            ?? 0,
             stock_quantity:        produit.stock_quantity        ?? 0,
             stock_alert_threshold: produit.stock_alert_threshold ?? 10,
+            supplier_id:           produit.supplier_id ?? '',
         },
     });
 
@@ -67,8 +70,9 @@ export default function Edit() {
         fd.append('stock_quantity',        String(values.stock_quantity));
         fd.append('stock_alert_threshold', String(values.stock_alert_threshold ?? 10));
 
+        if (values.supplier_id) fd.append('supplier_id', String(values.supplier_id));
         if (values.image)  fd.append('image', values.image);
-        else if (removeImage) fd.append('image', '');   // signal removal
+        else if (removeImage) fd.append('image', '');
 
         router.post(`/produits/${produit.uuid}`, fd, {
             forceFormData: true,
@@ -196,6 +200,21 @@ export default function Edit() {
                                 <Field className="flex flex-col gap-1.5">
                                     <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Description</FieldLabel>
                                     <Textarea className="rounded-xl resize-none h-24" {...field} />
+                                </Field>
+                            )} />
+                            <Controller control={form.control} name="supplier_id" render={({ field }) => (
+                                <Field className="flex flex-col gap-1.5">
+                                    <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Fournisseur</FieldLabel>
+                                    <Select value={String(field.value || '')} onValueChange={v => field.onChange(v ? Number(v) : null)}>
+                                        <SelectTrigger className="rounded-xl h-10">
+                                            <SelectValue placeholder="Sélectionner un fournisseur" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {suppliers?.map((s: any) => (
+                                                <SelectItem key={s.id} value={String(s.id)}>{s.nom}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </Field>
                             )} />
                         </div>

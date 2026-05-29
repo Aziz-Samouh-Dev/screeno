@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('supplier_id')->constrained('suppliers')->cascadeOnDelete();
-            $table->enum('type', ['F', 'R']); // F=purchase/facture, R=return
+            $table->enum('type', ['F', 'R', 'P']); // F=purchase/facture, R=return, P=payment
             $table->foreignId('product_id')->nullable()->constrained('produits')->nullOnDelete();
             $table->string('product_name')->nullable();
             $table->integer('quantity')->nullable();
