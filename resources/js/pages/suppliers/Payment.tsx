@@ -102,7 +102,7 @@ export default function Payment({ supplier, balance, outstandingItems, paymentMe
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Paiement — ${supplier.nom}`} />
+            <Head title={`Paiement · ${supplier.nom}`} />
             <div className="flex flex-col gap-6 p-6">
 
                 <div className="flex items-center gap-3">
@@ -246,7 +246,7 @@ export default function Payment({ supplier, balance, outstandingItems, paymentMe
                                                                     className={`w-36 rounded-lg border bg-card text-foreground px-2 py-1 text-sm font-mono text-right focus:outline-none focus:ring-2 ${itemOver ? 'border-red-300 focus:ring-red-200' : 'border-green-300 focus:ring-green-200'}`} />
                                                                 {itemOver && <span className="text-[10px] font-semibold text-red-500">Dépasse le dû</span>}
                                                             </div>
-                                                        ) : <span className="text-muted-foreground/50 text-xs">—</span>}
+                                                        ) : <span className="text-muted-foreground/50 text-xs">-</span>}
                                                     </td>
                                                 </tr>
                                             );
@@ -261,7 +261,7 @@ export default function Payment({ supplier, balance, outstandingItems, paymentMe
                                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">Moyen de paiement</label>
                                 {paymentMethods.length === 0 ? (
                                     <div className="flex items-center gap-2 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/40 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
-                                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" /> Aucun moyen de paiement — <a href="/settings/payment_methods" className="underline font-semibold">Configurer</a>
+                                        <AlertTriangle className="h-3.5 w-3.5 shrink-0" /> Aucun moyen de paiement · <a href="/settings/payment_methods" className="underline font-semibold">Configurer</a>
                                     </div>
                                 ) : (
                                     <div className="flex flex-wrap gap-2">

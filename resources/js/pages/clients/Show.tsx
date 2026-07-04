@@ -283,7 +283,7 @@ export default function ShowClient({ client, transactions, balance }: Props) {
                                         <tr>
                                             <td colSpan={6} className="px-5 py-12 text-center text-muted-foreground">
                                                 <ShoppingCart className="w-8 h-8 mx-auto opacity-20 mb-2" />
-                                                <p>Aucune opération — utilisez les boutons ci-dessus pour commencer.</p>
+                                                <p>Aucune opération · utilisez les boutons ci-dessus pour commencer.</p>
                                             </td>
                                         </tr>
                                     ) : transactions.slice(0, 20).map((t) => {
@@ -301,13 +301,13 @@ export default function ShowClient({ client, transactions, balance }: Props) {
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3 font-medium text-foreground">
-                                                    {t.product_name ?? <span className="text-muted-foreground italic">—</span>}
+                                                    {t.product_name ?? <span className="text-muted-foreground italic">-</span>}
                                                 </td>
                                                 <td className="px-4 py-3 text-center font-mono text-muted-foreground">
-                                                    {t.quantity ?? '—'}
+                                                    {t.quantity ?? '-'}
                                                 </td>
                                                 <td className="px-4 py-3 text-right font-mono text-xs text-muted-foreground">
-                                                    {t.unit_price ? fmt(t.unit_price) : '—'}
+                                                    {t.unit_price ? fmt(t.unit_price) : '-'}
                                                 </td>
                                                 <td className="px-4 py-3 text-right font-mono font-semibold text-xs">
                                                     <span className={t.type === 'F' ? 'text-blue-700 dark:text-blue-400' : t.type === 'R' ? 'text-purple-600 dark:text-purple-400' : 'text-green-600 dark:text-green-400'}>

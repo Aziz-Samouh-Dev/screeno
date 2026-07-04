@@ -217,7 +217,7 @@ export default function Purchase() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Achat — ${supplier.nom}`} />
+            <Head title={`Achat · ${supplier.nom}`} />
 
             <div className="flex flex-col gap-6 p-6">
 
@@ -241,7 +241,7 @@ export default function Purchase() {
                 <form onSubmit={handleSubmit} className="rounded-3xl border border-border bg-card shadow-sm overflow-hidden">
 
                     {rows.length > 0 && <div className="overflow-x-auto">
-                        <table className="w-full text-sm min-w-[700px]">
+                        <table className="w-full text-sm min-w-175">
                             <thead className="bg-muted/40 text-xs font-bold uppercase text-muted-foreground border-b border-border/60">
                                 <tr>
                                     <th className="px-4 py-3 text-left">Produit</th>

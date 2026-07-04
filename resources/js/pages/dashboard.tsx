@@ -43,9 +43,9 @@ const fullFmt = (v: number) =>
     safeNum(v).toLocaleString('fr-MA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 function timeAgo(iso: string | null | undefined) {
-    if (!iso) return '—';
+    if (!iso) return '-';
     const d = new Date(iso);
-    if (isNaN(d.getTime())) return '—';
+    if (isNaN(d.getTime())) return '-';
     const s = Math.floor((Date.now() - d.getTime()) / 1000);
     if (s < 60)    return `${s}s`;
     if (s < 3600)  return `${Math.floor(s / 60)}min`;
@@ -291,30 +291,31 @@ function BarChart({ data }: { data: QtyPoint[] }) {
     );
 }
 
-function StatCard({ label, value, unit, sub, Icon, iconBg, iconColor, footer }: {
-    label: string; value: string; unit?: string; sub?: string;
-    Icon: React.ElementType; iconBg: string; iconColor: string;
-    footer?: { left: string; right: string; rightColor?: string };
+function KpiCard({ label, value, info1Label, info1Value, info2Label, info2Value, icon: Icon, gradient }: {
+    label: string; value: string;
+    info1Label: string; info1Value: string;
+    info2Label: string; info2Value: string;
+    icon: React.ElementType; gradient: string;
 }) {
     return (
-        <div className="bg-card rounded-xl border border-border shadow-sm p-5">
-            <div className="flex items-start justify-between mb-3">
-                <p className="text-sm font-medium text-muted-foreground">{label}</p>
-                <div className={`p-2 rounded-lg ${iconBg}`}>
-                    <Icon className={`h-4 w-4 ${iconColor}`} />
+        <div className={`rounded-2xl p-5 flex flex-col gap-3 ${gradient}`}>
+            <div className="flex items-start justify-between">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-white/70 pt-0.5">{label}</p>
+                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                    <Icon className="w-4 h-4 text-white" />
                 </div>
             </div>
-            <p className="text-2xl font-bold text-foreground leading-none">
-                {value}
-                {unit && <span className="text-sm font-normal text-muted-foreground ml-1.5">{unit}</span>}
-            </p>
-            {sub && <p className="text-xs text-muted-foreground mt-1.5">{sub}</p>}
-            {footer && (
-                <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">{footer.left}</span>
-                    <span className={`text-xs font-semibold font-mono ${footer.rightColor ?? 'text-foreground/70'}`}>{footer.right}</span>
+            <p className="text-2xl font-bold tracking-tight font-mono leading-none text-white">{value}</p>
+            <div className="mt-auto grid grid-cols-2 gap-2 bg-white/15 rounded-xl px-3 py-2.5">
+                <div className="min-w-0">
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-white/50 mb-0.5">{info1Label}</p>
+                    <p className="text-xs font-bold text-white truncate">{info1Value}</p>
                 </div>
-            )}
+                <div className="min-w-0">
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-white/50 mb-0.5">{info2Label}</p>
+                    <p className="text-xs font-bold text-white truncate">{info2Value}</p>
+                </div>
+            </div>
         </div>
     );
 }
@@ -395,10 +396,10 @@ export default function Dashboard() {
                             {new Date().toLocaleDateString('fr-MA', { weekday:'long', day:'numeric', month:'long', year:'numeric' })}
                         </p>
                     </div>
-                    <div className="flex items-center gap-0.5 bg-card border border-border rounded-lg p-1">
+                    <div className="flex items-center gap-0.5 bg-card border border-border rounded-xl p-1">
                         {PERIODS.map(p => (
                             <button key={p.key} type="button" onClick={() => pickPeriod(p.key)}
-                                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all whitespace-nowrap ${
+                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
                                     period === p.key
                                         ? 'bg-foreground text-background shadow-sm'
                                         : 'text-muted-foreground hover:text-foreground hover:bg-accent'
@@ -410,7 +411,7 @@ export default function Dashboard() {
                 </div>
 
                 {period === 'custom' && (
-                    <div className="flex items-center gap-3 flex-wrap bg-card border border-border rounded-xl px-4 py-3 shadow-sm">
+                    <div className="flex items-center gap-3 flex-wrap bg-card border border-border rounded-2xl px-4 py-3">
                         <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
                             className="border border-border rounded-lg px-3 py-1.5 text-sm text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-ring" />
                         <ArrowRight className="h-4 w-4 text-muted-foreground" />
@@ -425,23 +426,50 @@ export default function Dashboard() {
 
                 {/* KPI Cards */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <StatCard label="Ventes clients" value={fmt(crm.total_f)} unit="MAD"
-                        sub={`${crm.txn_count} opération${crm.txn_count !== 1 ? 's' : ''} · période`}
-                        Icon={TrendingUp} iconBg="bg-indigo-50 dark:bg-indigo-950/40" iconColor="text-indigo-600 dark:text-indigo-400"
-                        footer={{ left: 'Solde impayé', right: `${fmt(crm.balance)} MAD`, rightColor: crm.balance > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-foreground/60' }} />
-                    <StatCard label="Encaissé" value={fmt(crm.total_p)} unit="MAD" sub="Paiements reçus · période"
-                        Icon={CreditCard} iconBg="bg-emerald-50 dark:bg-emerald-950/40" iconColor="text-emerald-600 dark:text-emerald-400"
-                        footer={{ left: 'Retours clients', right: `- ${fmt(crm.total_r)} MAD`, rightColor: 'text-red-500 dark:text-red-400' }} />
-                    <StatCard label="Retours clients" value={fmt(crm.total_r)} unit="MAD" sub="Retours sur la période"
-                        Icon={ArrowRightLeft} iconBg="bg-red-50 dark:bg-red-950/40" iconColor="text-red-500 dark:text-red-400" />
-                    <StatCard label="Solde net" value={fmt(crm.total_f - crm.total_r - crm.total_p)} unit="MAD" sub="Ventes − retours − encaissé"
-                        Icon={BarChart3}
-                        iconBg={crm.total_f - crm.total_r - crm.total_p >= 0 ? 'bg-emerald-50 dark:bg-emerald-950/40' : 'bg-red-50 dark:bg-red-950/40'}
-                        iconColor={crm.total_f - crm.total_r - crm.total_p >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'} />
+                    <KpiCard
+                        label="Ventes clients"
+                        value={`${fmt(crm.total_f)} MAD`}
+                        info1Label="Opérations"
+                        info1Value={`${crm.txn_count}`}
+                        info2Label="Solde impayé"
+                        info2Value={`${fmt(crm.balance)} MAD`}
+                        icon={TrendingUp}
+                        gradient="bg-linear-to-br from-blue-500 to-blue-700"
+                    />
+                    <KpiCard
+                        label="Encaissé"
+                        value={`${fmt(crm.total_p)} MAD`}
+                        info1Label="Retours"
+                        info1Value={`- ${fmt(crm.total_r)} MAD`}
+                        info2Label="Net reçu"
+                        info2Value={`${fmt(crm.total_p - crm.total_r)} MAD`}
+                        icon={CreditCard}
+                        gradient="bg-linear-to-br from-emerald-500 to-emerald-700"
+                    />
+                    <KpiCard
+                        label="Retours clients"
+                        value={`${fmt(crm.total_r)} MAD`}
+                        info1Label="Unités retournées"
+                        info1Value={`${qty.returned} u.`}
+                        info2Label="Unités vendues"
+                        info2Value={`${qty.sold} u.`}
+                        icon={ArrowRightLeft}
+                        gradient="bg-linear-to-br from-orange-500 to-orange-700"
+                    />
+                    <KpiCard
+                        label="Solde net"
+                        value={`${fmt(crm.total_f - crm.total_r - crm.total_p)} MAD`}
+                        info1Label="Ventes"
+                        info1Value={`${fmt(crm.total_f)} MAD`}
+                        info2Label="- Retours - Encaissé"
+                        info2Value={`- ${fmt(crm.total_r + crm.total_p)} MAD`}
+                        icon={BarChart3}
+                        gradient="bg-linear-to-br from-violet-500 to-violet-700"
+                    />
                 </div>
 
                 {/* Chart */}
-                <div className="bg-card rounded-xl border border-border shadow-sm">
+                <div className="bg-card rounded-2xl border border-border">
                     <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-border/60 flex-wrap gap-3">
                         <div>
                             <h2 className="text-sm font-semibold text-foreground">Évolution des flux</h2>
@@ -472,11 +500,11 @@ export default function Dashboard() {
                 </div>
 
                 {/* ── Product Quantity Analytics ── */}
-                <div className="bg-card rounded-xl border border-border shadow-sm">
+                <div className="bg-card rounded-2xl border border-border">
                     <div className="px-5 pt-5 pb-4 border-b border-border/60">
                         <div className="flex items-start justify-between gap-4 flex-wrap">
                             <div>
-                                <h2 className="text-sm font-semibold text-foreground">Analyse produits — Unités</h2>
+                                <h2 className="text-sm font-semibold text-foreground">Analyse produits · Unités</h2>
                                 <p className="text-xs text-muted-foreground mt-0.5">
                                     Quantités vendues et retournées · {PERIODS.find(p => p.key === period)?.label}
                                     {period === 'custom' && dateFrom && dateTo ? ` · ${dateFrom} → ${dateTo}` : ''}
@@ -565,10 +593,10 @@ export default function Dashboard() {
                 </div>
 
                 {/* Middle Row */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
 
                     {/* Top Clients */}
-                    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+                    <div className="bg-card rounded-2xl border border-border overflow-hidden">
                         <div className="flex items-center justify-between px-5 py-4 border-b border-border/60">
                             <div className="flex items-center gap-2">
                                 <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40">
@@ -617,7 +645,7 @@ export default function Dashboard() {
                     </div>
 
                     {/* Recent Transactions */}
-                    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+                    <div className="bg-card rounded-2xl border border-border overflow-hidden">
                         <div className="flex items-center justify-between px-5 py-4 border-b border-border/60">
                             <div className="flex items-center gap-2">
                                 <div className="p-1.5 rounded-lg bg-muted">
@@ -663,7 +691,7 @@ export default function Dashboard() {
 
                     {/* Right col */}
                     <div className="flex flex-col gap-4">
-                        <div className="bg-card rounded-xl border border-border shadow-sm p-5">
+                        <div className="bg-card rounded-2xl border border-border p-5">
                             <h2 className="text-sm font-semibold text-foreground mb-4">Répartition · période</h2>
                             <div className="space-y-3.5">
                                 {SERIES.map(s => {
@@ -688,7 +716,7 @@ export default function Dashboard() {
                             </div>
                         </div>
 
-                        <div className="bg-card rounded-xl border border-border shadow-sm p-5">
+                        <div className="bg-card rounded-2xl border border-border p-5">
                             <h2 className="text-sm font-semibold text-foreground mb-3">Inventaire global</h2>
                             <div className="grid grid-cols-3 gap-2">
                                 {inventoryItems.map(item => (
@@ -707,9 +735,9 @@ export default function Dashboard() {
                 </div>
 
                 {/* Bottom Row */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
                     {lowStock.length > 0 ? (
-                        <div className="bg-card rounded-xl border border-orange-200 dark:border-orange-900/50 shadow-sm overflow-hidden">
+                        <div className="bg-card rounded-2xl border border-orange-200 dark:border-orange-900/50 overflow-hidden">
                             <div className="flex items-center justify-between px-5 py-3.5 border-b border-orange-100 dark:border-orange-900/40">
                                 <div className="flex items-center gap-2">
                                     <div className="p-1.5 rounded-lg bg-orange-50 dark:bg-orange-950/40">
@@ -736,7 +764,7 @@ export default function Dashboard() {
                                             </div>
                                             <div>
                                                 <p className="text-xs font-semibold text-foreground">{p.nom || 'N/A'}</p>
-                                                <p className="text-[10px] text-muted-foreground font-mono">{p.sku || '—'}</p>
+                                                <p className="text-[10px] text-muted-foreground font-mono">{p.sku || '-'}</p>
                                             </div>
                                         </div>
                                         <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${
@@ -751,7 +779,7 @@ export default function Dashboard() {
                             </div>
                         </div>
                     ) : (
-                        <div className="bg-card rounded-xl border border-border shadow-sm p-6 flex items-center gap-4">
+                        <div className="bg-card rounded-2xl border border-border p-6 flex items-center gap-4">
                             <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 shrink-0">
                                 <CircleCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
                             </div>
@@ -762,7 +790,7 @@ export default function Dashboard() {
                         </div>
                     )}
 
-                    <div className="bg-card rounded-xl border border-border shadow-sm p-5">
+                    <div className="bg-card rounded-2xl border border-border p-5">
                         <h2 className="text-sm font-semibold text-foreground mb-3">Accès rapide</h2>
                         <div className="grid grid-cols-2 gap-2.5">
                             {quickActions.map(item => (

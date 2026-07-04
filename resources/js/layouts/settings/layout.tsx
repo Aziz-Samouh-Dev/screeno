@@ -8,20 +8,17 @@ import { cn, toUrl } from '@/lib/utils';
 import type { NavItem } from '@/types';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
-import { show } from '@/routes/two-factor';
 import { edit as editPassword } from '@/routes/user-password';
 
 const userNavItems: NavItem[] = [
     { title: 'Profil',            href: edit(),                      icon: null },
     { title: 'Mot de passe',      href: editPassword(),               icon: null },
-    { title: 'Two-Factor Auth',   href: show(),                      icon: null },
     { title: 'Apparence',         href: editAppearance(),             icon: null },
 ];
 
 const adminNavItems: NavItem[] = [
     { title: 'Profil',            href: edit(),                      icon: null },
     { title: 'Mot de passe',      href: editPassword(),               icon: null },
-    { title: 'Two-Factor Auth',   href: show(),                      icon: null },
     { title: 'Apparence',         href: editAppearance(),             icon: null },
     { title: 'Moyens de paiement', href: '/settings/payment_methods', icon: null },
     { title: 'Utilisateurs',      href: '/settings/users',            icon: null },

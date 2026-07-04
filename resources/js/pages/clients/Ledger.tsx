@@ -105,7 +105,7 @@ export default function Ledger({ client, transactions, balance, filters: serverF
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Historique — ${client.nom}`} />
+            <Head title={`Historique · ${client.nom}`} />
 
             <div className="flex flex-col gap-6 p-6">
 
@@ -277,7 +277,7 @@ export default function Ledger({ client, transactions, balance, filters: serverF
                                             {/* Product / Label */}
                                             <td className="px-5 py-3">
                                                 <span className="font-medium text-foreground">
-                                                    {t.product_name ?? '—'}
+                                                    {t.product_name ?? '-'}
                                                 </span>
                                                 {t.notes && (
                                                     <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{t.notes}</p>
@@ -286,12 +286,12 @@ export default function Ledger({ client, transactions, balance, filters: serverF
 
                                             {/* Qty */}
                                             <td className="px-5 py-3 text-center font-mono text-foreground/90">
-                                                {t.quantity ?? '—'}
+                                                {t.quantity ?? '-'}
                                             </td>
 
                                             {/* Unit price */}
                                             <td className="px-5 py-3 text-right font-mono text-xs text-muted-foreground">
-                                                {t.unit_price ? fmt(t.unit_price) : '—'}
+                                                {t.unit_price ? fmt(t.unit_price) : '-'}
                                             </td>
 
                                             {/* Total price */}

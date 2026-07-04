@@ -9,8 +9,7 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import type { BreadcrumbItem } from '@/types';
-import PasswordController from '@/actions/App/Http/Controllers/Settings/PasswordController';
-import { edit } from '@/routes/user-password';
+import { edit, update as updatePassword } from '@/routes/user-password';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -38,7 +37,8 @@ export default function Password() {
                     />
 
                     <Form
-                        {...PasswordController.update.form()}
+                        action={updatePassword.url()}
+                        method="put"
                         options={{
                             preserveScroll: true,
                         }}

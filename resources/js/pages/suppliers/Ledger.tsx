@@ -4,7 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, BookOpen, ShoppingBag, RotateCcw, CreditCard, RefreshCw, DollarSign, XCircle, TrendingUp, TrendingDown } from 'lucide-react';
+import { ArrowLeft, BookOpen, ShoppingBag, RotateCcw, CreditCard, RefreshCw, DollarSign, XCircle, TrendingUp, TrendingDown, FileDown } from 'lucide-react';
 
 interface Supplier { uuid: string; nom: string; email?: string; telephone?: string; ville?: string }
 interface Txn {
@@ -59,7 +59,7 @@ export default function Ledger() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Grand livre — ${supplier.nom}`} />
+            <Head title={`Grand livre · ${supplier.nom}`} />
 
             <div className="flex flex-col gap-6 p-6">
 
@@ -75,14 +75,14 @@ export default function Ledger() {
                                 <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                             </div>
                             <div>
-                                <h1 className="text-xl font-bold text-foreground">Grand livre — {supplier.nom}</h1>
+                                <h1 className="text-xl font-bold text-foreground">Grand livre · {supplier.nom}</h1>
                                 <p className="text-sm text-muted-foreground">
                                     {[supplier.email, supplier.telephone, supplier.ville].filter(Boolean).join(' · ')}
                                 </p>
                             </div>
                         </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                         <Button size="sm" className="rounded-xl bg-blue-600 hover:bg-blue-700"
                             onClick={() => router.visit(`/suppliers/${supplier.uuid}/purchase`)}>
                             <ShoppingBag className="h-3.5 w-3.5 mr-1.5" /> Achat
@@ -94,6 +94,19 @@ export default function Ledger() {
                         <Button size="sm" variant="outline" className="rounded-xl border-green-200 text-green-700 hover:bg-green-50"
                             onClick={() => router.visit(`/suppliers/${supplier.uuid}/payment`)}>
                             <CreditCard className="h-3.5 w-3.5 mr-1.5" /> Paiement
+                        </Button>
+                        <Button
+                            size="sm" variant="outline"
+                            className="rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50"
+                            onClick={() => {
+                                const params = new URLSearchParams();
+                                if (dateFrom) params.set('date_from', dateFrom);
+                                if (dateTo)   params.set('date_to', dateTo);
+                                const qs = params.toString();
+                                window.open(`/suppliers/${supplier.uuid}/ledger/pdf${qs ? '?' + qs : ''}`, '_blank');
+                            }}
+                        >
+                            <FileDown className="h-3.5 w-3.5 mr-1.5" /> PDF
                         </Button>
                     </div>
                 </div>
@@ -186,11 +199,11 @@ export default function Ledger() {
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3 font-medium text-foreground">
-                                                {t.product_name ?? <span className="text-muted-foreground italic">—</span>}
+                                                {t.product_name ?? <span className="text-muted-foreground italic">-</span>}
                                             </td>
-                                            <td className="px-4 py-3 text-center font-mono text-muted-foreground">{t.quantity ?? '—'}</td>
+                                            <td className="px-4 py-3 text-center font-mono text-muted-foreground">{t.quantity ?? '-'}</td>
                                             <td className="px-4 py-3 text-right font-mono text-xs text-muted-foreground">
-                                                {t.unit_price ? fmt(t.unit_price) : '—'}
+                                                {t.unit_price ? fmt(t.unit_price) : '-'}
                                             </td>
                                             <td className="px-4 py-3 text-right font-mono font-semibold text-xs">
                                                 <span className={isCredit ? 'text-green-600 dark:text-green-400' : 'text-blue-700 dark:text-blue-400'}>
@@ -202,7 +215,7 @@ export default function Ledger() {
                                                     {fmt(Math.abs(t.running_total))}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3 text-xs text-muted-foreground truncate max-w-32">{t.notes || '—'}</td>
+                                            <td className="px-4 py-3 text-xs text-muted-foreground truncate max-w-32">{t.notes || '-'}</td>
                                         </tr>
                                     );
                                 })}

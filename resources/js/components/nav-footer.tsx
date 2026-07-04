@@ -41,11 +41,16 @@ export function NavFooter({
                                     asChild
                                     isActive={isActive}
                                     tooltip={{ children: item.title }}
-                                    className="text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                                    className={[
+                                        'relative h-9 rounded-xl gap-3 px-2.5 text-sm font-medium transition-all duration-150',
+                                        isActive
+                                            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                                            : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50',
+                                    ].join(' ')}
                                 >
                                     <Link href={item.href}>
                                         {item.icon && (
-                                            <item.icon className="h-5 w-5 text-sidebar-foreground/70" />
+                                            <item.icon strokeWidth={1.5} className={`size-4.5! shrink-0 ${isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/50'}`} />
                                         )}
                                         <span>{item.title}</span>
                                     </Link>

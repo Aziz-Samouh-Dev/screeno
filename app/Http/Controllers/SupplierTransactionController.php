@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CompanyProfile;
 use App\Models\Produit;
 use App\Models\Supplier;
 use App\Models\SupplierTransaction;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -331,5 +333,84 @@ class SupplierTransactionController extends Controller
                 'date_to'   => $request->date_to   ?? '',
             ],
         ]);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /*  Ledger PDF                                                          */
+    /* ------------------------------------------------------------------ */
+
+    public function ledgerPdf(Request $request, Supplier $supplier)
+    {
+        $query = SupplierTransaction::where('supplier_id', $supplier->id)
+            ->orderBy('created_at', 'asc');
+
+        if ($request->date_from) $query->whereDate('created_at', '>=', $request->date_from);
+        if ($request->date_to)   $query->whereDate('created_at', '<=', $request->date_to);
+
+        $transactions = $query->get();
+
+        // Opening balance = RT of all transactions before the filter start
+        $openingBalance = 0.0;
+        if ($request->date_from) {
+            $prior = SupplierTransaction::where('supplier_id', $supplier->id)
+                ->whereDate('created_at', '<', $request->date_from)
+                ->get();
+            $openingBalance = $prior->reduce(function ($c, $t) {
+                if ($t->type === 'F') return $c + (float) $t->total_price;
+                if ($t->type === 'P') return $c - (float) $t->total_price;
+                if ($t->type === 'R' && $t->return_type === 'refund') return $c - (float) $t->total_price;
+                return $c;
+            }, 0.0);
+        }
+
+        $rt = $openingBalance;
+        $rows = $transactions->map(function ($t) use (&$rt) {
+            if ($t->type === 'F') $rt += (float) $t->total_price;
+            elseif ($t->type === 'P') $rt -= (float) $t->total_price;
+            elseif ($t->type === 'R' && $t->return_type === 'refund') $rt -= (float) $t->total_price;
+            return [
+                'type'          => $t->type,
+                'return_type'   => $t->return_type,
+                'product_name'  => $t->product_name,
+                'quantity'      => $t->quantity,
+                'unit_price'    => (float) $t->unit_price,
+                'total_price'   => (float) $t->total_price,
+                'running_total' => round($rt, 2),
+                'notes'         => $t->notes,
+                'created_at'    => $t->created_at->format('d/m/Y H:i'),
+            ];
+        });
+
+        // Period totals
+        $totalF = $transactions->where('type', 'F')->sum('total_price');
+        $totalR = $transactions->where('type', 'R')->where('return_type', 'refund')->sum('total_price');
+        $totalP = $transactions->where('type', 'P')->sum('total_price');
+
+        // Overall balance (unfiltered)
+        $allTxns = SupplierTransaction::where('supplier_id', $supplier->id)->get();
+        $balance = $allTxns->reduce(function ($c, $t) {
+            if ($t->type === 'F') return $c + (float) $t->total_price;
+            if ($t->type === 'P') return $c - (float) $t->total_price;
+            if ($t->type === 'R' && $t->return_type === 'refund') return $c - (float) $t->total_price;
+            return $c;
+        }, 0.0);
+        $balance = round($balance, 2);
+
+        $company  = (CompanyProfile::first() ?? new CompanyProfile())->toArray();
+        $dateFrom = $request->date_from ? \Carbon\Carbon::parse($request->date_from)->format('d/m/Y') : null;
+        $dateTo   = $request->date_to   ? \Carbon\Carbon::parse($request->date_to)->format('d/m/Y')   : null;
+
+        $pdf = Pdf::loadView('suppliers.ledger_pdf', compact(
+            'supplier', 'rows', 'company',
+            'totalF', 'totalR', 'totalP', 'balance',
+            'openingBalance', 'dateFrom', 'dateTo'
+        ))->setPaper('a4', 'portrait');
+
+        $namePart = \Str::slug($supplier->nom);
+        $datePart = $request->date_from && $request->date_to
+            ? '_' . $request->date_from . '_au_' . $request->date_to
+            : ($request->date_from ? '_depuis_' . $request->date_from
+            : ($request->date_to   ? '_jusqu_' . $request->date_to : ''));
+        return $pdf->download("grand-livre-fournisseur-{$namePart}{$datePart}.pdf");
     }
 }

@@ -9,8 +9,7 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import type { BreadcrumbItem } from '@/types';
-import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
-import { edit } from '@/routes/profile';
+import { edit, update as updateProfile } from '@/routes/profile';
 import { send } from '@/routes/verification';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -44,7 +43,8 @@ export default function Profile({
                     />
 
                     <Form
-                        {...ProfileController.update.form()}
+                        action={updateProfile.url()}
+                        method="patch"
                         options={{
                             preserveScroll: true,
                         }}

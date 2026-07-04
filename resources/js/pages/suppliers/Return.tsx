@@ -187,13 +187,13 @@ export default function Return() {
     if (returnableProducts.length === 0) {
         return (
             <AppLayout breadcrumbs={breadcrumbs}>
-                <Head title={`Retour — ${supplier.nom}`} />
+                <Head title={`Retour · ${supplier.nom}`} />
                 <div className="flex flex-col gap-6 p-6">
                     <div className="flex items-center gap-3">
                         <Button variant="ghost" size="icon" className="rounded-xl" onClick={() => router.visit(`/suppliers/${supplier.uuid}`)}>
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
-                        <h1 className="text-xl font-bold text-foreground">Retour — {supplier.nom}</h1>
+                        <h1 className="text-xl font-bold text-foreground">Retour · {supplier.nom}</h1>
                     </div>
                     <div className="rounded-3xl border border-border bg-card shadow-sm p-12 text-center">
                         <PackageX className="h-12 w-12 text-muted-foreground/20 mx-auto mb-3" />
@@ -207,7 +207,7 @@ export default function Return() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Retour — ${supplier.nom}`} />
+            <Head title={`Retour · ${supplier.nom}`} />
 
             <div className="flex flex-col gap-6 p-6">
                 <div className="flex items-center gap-3">

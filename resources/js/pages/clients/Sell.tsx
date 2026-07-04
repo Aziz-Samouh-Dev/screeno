@@ -188,7 +188,7 @@ export default function Sell({ client, products }: Props) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Vente — ${client.nom}`} />
+            <Head title={`Vente · ${client.nom}`} />
 
             <div className="flex flex-col gap-6 p-6">
 
@@ -253,7 +253,7 @@ export default function Sell({ client, products }: Props) {
                                                         item.stock_quantity <= item.stock_alert_threshold ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400' :
                                                         'bg-green-100 dark:bg-green-950/50 text-green-600 dark:text-green-400'
                                                     }`}>{item.stock_quantity}</span>
-                                                ) : <span className="text-muted-foreground/50">—</span>}
+                                                ) : <span className="text-muted-foreground/50">-</span>}
                                             </td>
                                             <td className="px-5 py-2 text-center">
                                                 <div>

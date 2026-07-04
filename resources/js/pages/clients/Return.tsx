@@ -192,13 +192,13 @@ export default function Return({ client, returnableProducts }: Props) {
     if (returnableProducts.length === 0) {
         return (
             <AppLayout breadcrumbs={breadcrumbs}>
-                <Head title={`Retour — ${client.nom}`} />
+                <Head title={`Retour · ${client.nom}`} />
                 <div className="flex flex-col gap-6 p-6">
                     <div className="flex items-center gap-3">
                         <Button variant="ghost" size="icon" className="rounded-xl" onClick={() => router.visit(`/clients/${client.uuid}`)}>
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
-                        <h1 className="text-xl font-bold text-foreground">Retour — {client.nom}</h1>
+                        <h1 className="text-xl font-bold text-foreground">Retour · {client.nom}</h1>
                     </div>
                     <div className="rounded-3xl border border-border bg-card shadow-sm flex flex-col items-center gap-3 py-20 text-muted-foreground">
                         <PackageX className="h-12 w-12 opacity-20" />
@@ -215,7 +215,7 @@ export default function Return({ client, returnableProducts }: Props) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Retour — ${client.nom}`} />
+            <Head title={`Retour · ${client.nom}`} />
 
             <div className="flex flex-col gap-6 p-6">
 
@@ -282,7 +282,7 @@ export default function Return({ client, returnableProducts }: Props) {
                                                     <span className="inline-block rounded-full px-2 py-0.5 text-xs font-bold font-mono bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-400">
                                                         {item.available}
                                                     </span>
-                                                ) : <span className="text-muted-foreground/50">—</span>}
+                                                ) : <span className="text-muted-foreground/50">-</span>}
                                             </td>
                                             <td className="px-5 py-2 text-center">
                                                 <div>
@@ -315,10 +315,10 @@ export default function Return({ client, returnableProducts }: Props) {
                                             </td>
 
                                             <td className="px-5 py-2 text-right font-mono text-xs text-muted-foreground">
-                                                {item.unit_price ? fmt(item.unit_price) : '—'}
+                                                {item.unit_price ? fmt(item.unit_price) : '-'}
                                             </td>
                                             <td className="px-5 py-2 text-right font-semibold font-mono text-xs text-purple-700 dark:text-purple-400">
-                                                {item.unit_price ? fmt(item.quantity * item.unit_price) : '—'}
+                                                {item.unit_price ? fmt(item.quantity * item.unit_price) : '-'}
                                             </td>
                                             <td className="px-5 py-2">
                                                 {items.length > 1 && (

@@ -154,9 +154,9 @@ export default function Payments({ payments, total, filters: sf }: Props) {
                                                 {p.client_nom}
                                             </button>
                                         </td>
-                                        <td className="px-5 py-3 text-foreground/90">{p.product_name ?? '—'}</td>
+                                        <td className="px-5 py-3 text-foreground/90">{p.product_name ?? '-'}</td>
                                         <td className="px-5 py-3 text-xs text-muted-foreground max-w-xs">
-                                            <span className="line-clamp-1">{p.notes ?? '—'}</span>
+                                            <span className="line-clamp-1">{p.notes ?? '-'}</span>
                                         </td>
                                         <td className="px-5 py-3 text-right font-mono font-semibold text-green-700 dark:text-green-400">
                                             +{fmt(p.total_price)}

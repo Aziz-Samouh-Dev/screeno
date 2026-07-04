@@ -105,7 +105,7 @@ export default function PaymentMethods({ paymentMethods }: Props) {
                                         <td className="px-4 py-3">
                                             <span className="rounded bg-muted px-2 py-0.5 text-xs font-mono">{m.code}</span>
                                         </td>
-                                        <td className="px-4 py-3 text-muted-foreground">{m.description || '—'}</td>
+                                        <td className="px-4 py-3 text-muted-foreground">{m.description || '-'}</td>
                                         <td className="px-4 py-3">
                                             {m.is_active ? (
                                                 <Badge className="bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 gap-1">

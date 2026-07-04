@@ -87,7 +87,7 @@ export default function Edit() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Edit — ${produit.nom}`} />
+            <Head title={`Edit · ${produit.nom}`} />
 
             <div className="flex flex-col gap-6 p-6">
 

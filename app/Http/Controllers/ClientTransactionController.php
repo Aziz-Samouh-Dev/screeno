@@ -394,7 +394,12 @@ class ClientTransactionController extends Controller
             'openingBalance', 'dateFrom', 'dateTo'
         ))->setPaper('a4', 'portrait');
 
-        return $pdf->download("ledger-{$client->nom}.pdf");
+        $namePart = \Str::slug($client->nom);
+        $datePart = $request->date_from && $request->date_to
+            ? '_' . $request->date_from . '_au_' . $request->date_to
+            : ($request->date_from ? '_depuis_' . $request->date_from
+            : ($request->date_to   ? '_jusqu_' . $request->date_to : ''));
+        return $pdf->download("grand-livre-{$namePart}{$datePart}.pdf");
     }
 
     /* ------------------------------------------------------------------ */

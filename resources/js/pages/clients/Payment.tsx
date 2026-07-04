@@ -136,14 +136,14 @@ export default function Payment({ client, balance, outstandingItems, paymentMeth
     if (outstandingItems.length === 0) {
         return (
             <AppLayout breadcrumbs={breadcrumbs}>
-                <Head title={`Paiement — ${client.nom}`} />
+                <Head title={`Paiement · ${client.nom}`} />
                 <div className="flex flex-col gap-6 p-6">
                     <div className="flex items-center gap-3">
                         <Button variant="ghost" size="icon" className="rounded-xl"
                             onClick={() => router.visit(`/clients/${client.uuid}`)}>
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
-                        <h1 className="text-xl font-bold text-foreground">Paiement — {client.nom}</h1>
+                        <h1 className="text-xl font-bold text-foreground">Paiement · {client.nom}</h1>
                     </div>
                     <div className="rounded-3xl border border-border bg-card shadow-sm flex flex-col items-center gap-3 py-20 text-muted-foreground">
                         <PackageX className="h-12 w-12 opacity-20" />
@@ -162,7 +162,7 @@ export default function Payment({ client, balance, outstandingItems, paymentMeth
     /* ── main render ──────────────────────────────── */
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Paiement — ${client.nom}`} />
+            <Head title={`Paiement · ${client.nom}`} />
 
             <div className="flex flex-col gap-6 p-6">
 
@@ -279,7 +279,7 @@ export default function Payment({ client, balance, outstandingItems, paymentMeth
                                 <>
                                     <div className="px-6 py-2.5 bg-indigo-50/60 dark:bg-indigo-950/20 border-b border-indigo-100 dark:border-indigo-900/60 flex items-center justify-between">
                                         <p className="text-xs font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">
-                                            Répartition — {autoPayments.length} produit{autoPayments.length > 1 ? 's' : ''} réglé{autoPayments.length > 1 ? 's' : ''}
+                                            Répartition · {autoPayments.length} produit{autoPayments.length > 1 ? 's' : ''} réglé{autoPayments.length > 1 ? 's' : ''}
                                         </p>
                                         <p className="text-[11px] text-muted-foreground">Du plus ancien au plus récent</p>
                                     </div>
@@ -321,7 +321,7 @@ export default function Payment({ client, balance, outstandingItems, paymentMeth
                                                             <td className={`px-6 py-3 text-right font-mono font-bold ${
                                                                 d.pay > 0.005 ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground/50'
                                                             }`}>
-                                                                {d.pay > 0.005 ? fmt(d.pay) : '—'}
+                                                                {d.pay > 0.005 ? fmt(d.pay) : '-'}
                                                             </td>
                                                             <td className={`px-6 py-3 text-right font-mono text-xs font-semibold ${
                                                                 full ? 'text-green-600 dark:text-green-400' : reste > 0 ? 'text-red-500 dark:text-red-400' : 'text-muted-foreground'
@@ -437,7 +437,7 @@ export default function Payment({ client, balance, outstandingItems, paymentMeth
                                                                 )}
                                                             </div>
                                                         ) : (
-                                                            <span className="text-muted-foreground/50 text-xs">—</span>
+                                                            <span className="text-muted-foreground/50 text-xs">-</span>
                                                         )}
                                                     </td>
                                                 </tr>
@@ -459,7 +459,7 @@ export default function Payment({ client, balance, outstandingItems, paymentMeth
                             {paymentMethods.length === 0 ? (
                                 <div className="flex items-center gap-2 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/40 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
                                     <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                                    Aucun moyen de paiement actif —{' '}
+                                    Aucun moyen de paiement actif.{' '}
                                     <a href="/settings/payment_methods" className="underline font-semibold">
                                         Configurer dans Paramètres
                                     </a>

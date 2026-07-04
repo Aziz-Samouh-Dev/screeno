@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Controllers\ChargeController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ClientTransactionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\ProduitController;
 use App\Http\Controllers\SupplierController;
@@ -52,7 +55,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/suppliers/{supplier}/return',   [SupplierTransactionController::class, 'storeReturn'])->name('suppliers.return.store');
     Route::get('/suppliers/{supplier}/payment',   [SupplierTransactionController::class, 'paymentForm'])->name('suppliers.payment');
     Route::post('/suppliers/{supplier}/payment',  [SupplierTransactionController::class, 'storePayment'])->name('suppliers.payment.store');
-    Route::get('/suppliers/{supplier}/ledger',    [SupplierTransactionController::class, 'ledger'])->name('suppliers.ledger');
+    Route::get('/suppliers/{supplier}/ledger',     [SupplierTransactionController::class, 'ledger'])->name('suppliers.ledger');
+    Route::get('/suppliers/{supplier}/ledger/pdf', [SupplierTransactionController::class, 'ledgerPdf'])->name('suppliers.ledger.pdf');
 
     Route::resource('suppliers', SupplierController::class);
     Route::post('/suppliers/bulk-delete', [SupplierController::class, 'bulkDelete'])
@@ -61,6 +65,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('suppliers.export');
 
     Route::resource('/settings/payment_methods', PaymentMethodController::class);
+
+    // GESTION — FINANCES
+    Route::get('/finances', [FinanceController::class, 'index'])->name('finances.index');
+
+    // GESTION — CHARGES
+    Route::get('/charges/export/pdf', [ChargeController::class, 'exportPdf'])->name('charges.export.pdf');
+    Route::get('/charges',            [ChargeController::class, 'index'])->name('charges.index');
+    Route::post('/charges',           [ChargeController::class, 'store'])->name('charges.store');
+    Route::put('/charges/{charge}',   [ChargeController::class, 'update'])->name('charges.update');
+    Route::delete('/charges/{charge}',[ChargeController::class, 'destroy'])->name('charges.destroy');
+
+    // GESTION — EMPLOYÉS
+    Route::post('/employees/pay-all',          [EmployeeController::class, 'payAll'])->name('employees.pay-all');
+    Route::post('/employees/{employee}/pay',   [EmployeeController::class, 'pay'])->name('employees.pay');
+    Route::get('/employees/create',            [EmployeeController::class, 'create'])->name('employees.create');
+    Route::get('/employees/{employee}/edit',   [EmployeeController::class, 'edit'])->name('employees.edit');
+    Route::get('/employees',                   [EmployeeController::class, 'index'])->name('employees.index');
+    Route::post('/employees',                  [EmployeeController::class, 'store'])->name('employees.store');
+    Route::put('/employees/{employee}',        [EmployeeController::class, 'update'])->name('employees.update');
+    Route::delete('/employees/{employee}',     [EmployeeController::class, 'destroy'])->name('employees.destroy');
 
 });
 

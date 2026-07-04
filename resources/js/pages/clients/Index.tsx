@@ -339,13 +339,13 @@ export default function Index() {
                                                     </div>
                                                     <div>
                                                         <p className="font-semibold text-foreground group-hover:text-indigo-700 dark:group-hover:text-indigo-400 transition-colors text-sm">{c.nom}</p>
-                                                        <p className="text-xs text-muted-foreground">{c.email || '—'}</p>
+                                                        <p className="text-xs text-muted-foreground">{c.email || '-'}</p>
                                                     </div>
                                                 </div>
                                             </td>
 
-                                            <td className="px-4 py-3.5 text-muted-foreground font-mono text-xs">{c.telephone || '—'}</td>
-                                            <td className="px-4 py-3.5 text-muted-foreground text-xs">{c.ville || '—'}</td>
+                                            <td className="px-4 py-3.5 text-muted-foreground font-mono text-xs">{c.telephone || '-'}</td>
+                                            <td className="px-4 py-3.5 text-muted-foreground text-xs">{c.ville || '-'}</td>
 
                                             <td className="px-4 py-3.5">
                                                 <div className="flex flex-col gap-0.5">

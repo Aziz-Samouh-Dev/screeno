@@ -1,7 +1,8 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     LayoutDashboard, Package, Users, Truck,
-    CreditCard, Warehouse, Building2, Settings,
+    Wallet, Building2, Settings,
+    TrendingUp, Receipt, User, ShieldAlert,
 } from 'lucide-react';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -15,15 +16,21 @@ import AppLogoIcon from './app-logo-icon';
 import { dashboard } from '@/routes';
 
 const generalItems: NavItem[] = [
-    { title: 'Tableau de bord', href: dashboard(),  icon: LayoutDashboard, iconColor: 'text-sidebar-foreground/80' },
-    { title: 'Produits',        href: '/produits',  icon: Package,         iconColor: 'text-sidebar-foreground/80' },
-    { title: 'Clients',         href: '/clients',   icon: Users,           iconColor: 'text-sidebar-foreground/80' },
-    { title: 'Fournisseurs',    href: '/suppliers', icon: Truck,           iconColor: 'text-sidebar-foreground/80' },
+    { title: 'Tableau de bord', href: dashboard(),  icon: LayoutDashboard },
+    { title: 'Clients',         href: '/clients',   icon: Users            },
+    { title: 'Fournisseurs',    href: '/suppliers', icon: Truck            },
+    { title: 'Produits',        href: '/produits',  icon: Package          },
 ];
 
-const financeItems: NavItem[] = [
-    { title: 'Paiements',       href: '/payments',  icon: CreditCard,      iconColor: 'text-sidebar-foreground/80' },
-    { title: 'Stock endommagé', href: '/stock',     icon: Warehouse,       iconColor: 'text-sidebar-foreground/80' },
+const operationsItems: NavItem[] = [
+    { title: 'Paiements',       href: '/payments',  icon: Wallet           },
+    { title: 'Stock endommagé', href: '/stock',     icon: ShieldAlert      },
+];
+
+const gestionItems: NavItem[] = [
+    { title: 'Finances',  href: '/finances',  icon: TrendingUp },
+    { title: 'Charges',   href: '/charges',   icon: Receipt    },
+    { title: 'Employés',  href: '/employees', icon: User       },
 ];
 
 export function AppSidebar() {
@@ -57,7 +64,9 @@ export function AppSidebar() {
             <SidebarContent className="gap-0">
                 <NavMain items={generalItems} label="Général" />
                 <div className="mx-3 my-1 h-px bg-sidebar-border/40" />
-                <NavMain items={financeItems} label="Finances" />
+                <NavMain items={operationsItems} label="Opérations" />
+                <div className="mx-3 my-1 h-px bg-sidebar-border/40" />
+                <NavMain items={gestionItems} label="Gestion" />
             </SidebarContent>
 
             <SidebarFooter>
