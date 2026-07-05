@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CompanyProfile;
+use App\Models\DamagedStock;
 use App\Models\Produit;
 use App\Models\Supplier;
 use App\Models\SupplierTransaction;
@@ -116,20 +117,39 @@ class SupplierTransactionController extends Controller
             })
             ->filter()->values();
 
+        // Damaged stock items for this supplier's products
+        $supplierProductIds = $purchases->pluck('product_id')->unique()->filter()->values();
+
+        $damagedProducts = DamagedStock::selectRaw('product_id, product_name, SUM(quantity) as total_qty')
+            ->whereIn('product_id', $supplierProductIds)
+            ->groupBy('product_id', 'product_name')
+            ->having('total_qty', '>', 0)
+            ->get()
+            ->map(fn ($d) => [
+                'product_id'   => (int) $d->product_id,
+                'product_name' => $d->product_name,
+                'quantity'     => (int) $d->total_qty,
+                'unit_price'   => round((float) SupplierTransaction::where('supplier_id', $supplier->id)
+                    ->where('type', 'F')->where('product_id', $d->product_id)->avg('unit_price'), 2),
+            ])
+            ->values();
+
         return Inertia::render('suppliers/Return', [
             'supplier'           => $supplier->only(['uuid', 'nom', 'telephone']),
             'returnableProducts' => $returnableProducts,
+            'damagedProducts'    => $damagedProducts,
         ]);
     }
 
     public function storeReturn(Request $request, Supplier $supplier)
     {
         $validated = $request->validate([
-            'items'               => 'required|array|min:1',
-            'items.*.product_id'  => 'required|integer',
-            'items.*.quantity'    => 'required|integer|min:1',
-            'items.*.return_type' => 'required|in:change,refund,loss',
-            'notes'               => 'nullable|string',
+            'items'                    => 'required|array|min:1',
+            'items.*.product_id'       => 'required|integer',
+            'items.*.quantity'         => 'required|integer|min:1',
+            'items.*.return_type'      => 'required|in:change,refund,loss',
+            'items.*.from_damaged'     => 'nullable|boolean',
+            'notes'                    => 'nullable|string',
         ]);
 
         try {
@@ -145,19 +165,33 @@ class SupplierTransactionController extends Controller
                     $totalReturned  = SupplierTransaction::where('supplier_id', $supplier->id)
                         ->where('type', 'R')->where('product_id', $pid)->sum('quantity');
 
-                    // Add already-submitted qty for this product in this request
-                    $alreadyThisRequest = $inFlight[$pid] ?? 0;
-                    $available = $totalPurchased - $totalReturned - $alreadyThisRequest;
+                    // Skip purchased-quantity check for damaged-stock returns
+                    if (empty($item['from_damaged'])) {
+                        $alreadyThisRequest = $inFlight[$pid] ?? 0;
+                        $available = $totalPurchased - $totalReturned - $alreadyThisRequest;
 
-                    if ($item['quantity'] > $available) {
-                        $name = SupplierTransaction::where('supplier_id', $supplier->id)
-                            ->where('product_id', $pid)->value('product_name') ?? 'inconnu';
-                        throw new \Exception(
-                            "Quantité trop élevée pour « {$name} » — max retournable : {$available}."
-                        );
+                        if ($item['quantity'] > $available) {
+                            $name = SupplierTransaction::where('supplier_id', $supplier->id)
+                                ->where('product_id', $pid)->value('product_name') ?? 'inconnu';
+                            throw new \Exception(
+                                "Quantité trop élevée pour « {$name} » — max retournable : {$available}."
+                            );
+                        }
+
+                        $inFlight[$pid] = $alreadyThisRequest + $item['quantity'];
+                    } else {
+                        // Validate against damaged stock
+                        $damagedQty = DamagedStock::where('product_id', $pid)->sum('quantity');
+                        $alreadyThisRequest = $inFlight[$pid] ?? 0;
+                        if ($item['quantity'] > ($damagedQty - $alreadyThisRequest)) {
+                            $name = SupplierTransaction::where('supplier_id', $supplier->id)
+                                ->where('product_id', $pid)->value('product_name') ?? 'inconnu';
+                            throw new \Exception(
+                                "Quantité trop élevée pour « {$name} » — stock endommagé disponible : " . ($damagedQty - $alreadyThisRequest) . "."
+                            );
+                        }
+                        $inFlight[$pid] = $alreadyThisRequest + $item['quantity'];
                     }
-
-                    $inFlight[$pid] = $alreadyThisRequest + $item['quantity'];
 
                     $avgPrice    = (float) SupplierTransaction::where('supplier_id', $supplier->id)
                         ->where('type', 'F')->where('product_id', $pid)->avg('unit_price');
@@ -178,7 +212,25 @@ class SupplierTransactionController extends Controller
                         'notes'        => $validated['notes'] ?? null,
                     ]);
 
-                    if ($returnType === 'refund' || $returnType === 'loss') {
+                    if (!empty($item['from_damaged'])) {
+                        // Deduct from damaged_stock
+                        $remaining = $item['quantity'];
+                        $damagedRows = DamagedStock::where('product_id', $pid)
+                            ->where('quantity', '>', 0)
+                            ->orderBy('created_at')
+                            ->get();
+
+                        foreach ($damagedRows as $row) {
+                            if ($remaining <= 0) break;
+                            $take = min($remaining, $row->quantity);
+                            if ($row->quantity - $take <= 0) {
+                                $row->delete();
+                            } else {
+                                $row->decrement('quantity', $take);
+                            }
+                            $remaining -= $take;
+                        }
+                    } elseif ($returnType === 'refund' || $returnType === 'loss') {
                         Produit::find($pid)?->decrement('stock_quantity', $item['quantity']);
                     }
                 }

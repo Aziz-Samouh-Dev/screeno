@@ -13,9 +13,9 @@ import { useState } from 'react';
 import { ArrowLeft, User, Mail, Phone, MapPin, FileText, Save, Eye } from 'lucide-react';
 
 const formSchema = z.object({
-    nom:       z.string().min(1, { message: 'Name is required' }),
-    email:     z.string().email({ message: 'Invalid email' }).optional().or(z.literal('')),
-    telephone: z.string().min(1, { message: 'Phone is required' }).regex(/^[0-9+\-\s]+$/, { message: 'Invalid phone' }),
+    nom:       z.string().min(1, { message: 'Le nom est requis' }),
+    email:     z.string().email({ message: 'Email invalide' }).optional().or(z.literal('')),
+    telephone: z.string().min(1, { message: 'Le téléphone est requis' }).regex(/^[0-9+\-\s]+$/, { message: 'Téléphone invalide' }),
     adresse:   z.string().optional(),
     ville:     z.string().optional(),
     notes:     z.string().optional(),
@@ -72,7 +72,7 @@ export default function Edit() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Edit · ${client.nom}`} />
+            <Head title={`Modifier : ${client.nom}`} />
 
             <div className="flex flex-col gap-6 p-6">
 
@@ -102,7 +102,7 @@ export default function Edit() {
                                 {watchedNom ? getInitials(watchedNom) : <User className="h-8 w-8 opacity-40" />}
                             </div>
                             <div className="text-center">
-                                <p className="font-bold text-foreground">{watchedNom || 'Client Name'}</p>
+                                <p className="font-bold text-foreground">{watchedNom || 'Nom du client'}</p>
                                 <p className="text-xs text-muted-foreground mt-0.5">{form.watch('email') || 'email@example.com'}</p>
                             </div>
                             <span className={`rounded-full px-3 py-1 text-xs font-semibold border ${
@@ -110,16 +110,16 @@ export default function Edit() {
                                     ? 'bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900/60'
                                     : 'bg-red-50 dark:bg-red-950/40 text-red-600 border-red-200 dark:border-red-900/60'
                             }`}>
-                                {form.watch('status')}
+                                {form.watch('status') === 'active' ? 'Actif' : 'Inactif'}
                             </span>
                         </div>
 
                         {/* Meta */}
                         <div className="rounded-2xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground space-y-1.5">
-                            <p className="font-bold text-foreground/90 mb-1">Client since</p>
+                            <p className="font-bold text-foreground/90 mb-1">Client depuis</p>
                             <p>{new Date(client.created_at).toLocaleDateString('fr-MA', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
                             {client.updated_at !== client.created_at && (
-                                <p className="text-muted-foreground/70">Last updated: {new Date(client.updated_at).toLocaleDateString()}</p>
+                                <p className="text-muted-foreground/70">Dernière mise à jour : {new Date(client.updated_at).toLocaleDateString('fr-MA')}</p>
                             )}
                         </div>
                     </div>
@@ -137,7 +137,7 @@ export default function Edit() {
                                 <Controller control={form.control} name="nom" render={({ field, fieldState }) => (
                                     <Field className="flex flex-col gap-1.5" data-invalid={fieldState.invalid}>
                                         <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Nom complet *</FieldLabel>
-                                        <Input placeholder="John Doe" className="rounded-xl" {...field} />
+                                        <Input placeholder="Nom complet" className="rounded-xl" {...field} />
                                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                                         {serverErrors.nom && <p className="text-xs text-red-500">{serverErrors.nom}</p>}
                                     </Field>
@@ -207,7 +207,7 @@ export default function Edit() {
                                 <Controller control={form.control} name="adresse" render={({ field }) => (
                                     <Field className="flex flex-col gap-1.5">
                                         <FieldLabel className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Adresse</FieldLabel>
-                                        <Input placeholder="Street, building…" className="rounded-xl" {...field} />
+                                        <Input placeholder="Rue, bâtiment..." className="rounded-xl" {...field} />
                                     </Field>
                                 )} />
                             </div>
@@ -220,7 +220,7 @@ export default function Edit() {
                                 <h3 className="font-bold text-foreground">Notes</h3>
                             </div>
                             <Controller control={form.control} name="notes" render={({ field }) => (
-                                <Textarea className="rounded-xl resize-none h-24" placeholder="Internal notes…" {...field} />
+                                <Textarea className="rounded-xl resize-none h-24" placeholder="Notes internes..." {...field} />
                             )} />
                         </div>
 

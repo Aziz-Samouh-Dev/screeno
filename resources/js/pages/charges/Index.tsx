@@ -9,31 +9,32 @@ import { ConfirmDialog, useConfirmDialog } from '@/components/ui/confirm-dialog'
 import {
     Plus, Pencil, Trash2, Download, Search,
     Building2, Users, Zap, Truck, FileText, Shield, Wifi, MoreHorizontal,
-    AlertCircle, X,
+    AlertCircle, X, Settings, User, CreditCard,
 } from 'lucide-react';
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Charges', href: '/charges' }];
 
+interface Category {
+    value: string; label: string; color: string; bg_color: string;
+    icon_name: string; is_default: boolean;
+}
 interface Charge {
     uuid: string; category: string; description: string; amount: number;
     date: string; date_display: string; recurrence: string;
     payment_method: string | null; status: string; notes: string | null;
+    readonly: boolean;
 }
 interface Stats {
     total_mois: number; loyer_mois: number; salaires_mois: number;
     a_payer: number; a_payer_count: number;
 }
 
-const CATEGORIES = [
-    { value: 'loyer',      label: 'Loyer',      icon: Building2, color: 'text-amber-500',  bg: 'bg-amber-50 dark:bg-amber-950/40' },
-    { value: 'salaires',   label: 'Salaires',   icon: Users,     color: 'text-violet-500', bg: 'bg-violet-50 dark:bg-violet-950/40' },
-    { value: 'energie',    label: 'Énergie',    icon: Zap,       color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-950/40' },
-    { value: 'transport',  label: 'Transport',  icon: Truck,     color: 'text-cyan-500',   bg: 'bg-cyan-50 dark:bg-cyan-950/40' },
-    { value: 'taxes',      label: 'Taxes',      icon: FileText,  color: 'text-red-500',    bg: 'bg-red-50 dark:bg-red-950/40' },
-    { value: 'assurance',  label: 'Assurance',  icon: Shield,    color: 'text-emerald-500',bg: 'bg-emerald-50 dark:bg-emerald-950/40' },
-    { value: 'telecom',    label: 'Télécom',    icon: Wifi,      color: 'text-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-950/40' },
-    { value: 'autre',      label: 'Autre',      icon: MoreHorizontal, color: 'text-slate-500', bg: 'bg-slate-50 dark:bg-slate-800/40' },
-];
+// Icon name → Lucide icon map
+const ICON_MAP: Record<string, React.ElementType> = {
+    'building2': Building2, 'users': Users, 'zap': Zap, 'truck': Truck,
+    'file-text': FileText, 'shield': Shield, 'wifi': Wifi,
+    'more-horizontal': MoreHorizontal, 'user': User, 'credit-card': CreditCard,
+};
 
 const RECURRENCES = [
     { value: 'ponctuelle',    label: 'Ponctuel' },
@@ -41,34 +42,40 @@ const RECURRENCES = [
     { value: 'trimestrielle', label: 'Trimestriel' },
     { value: 'annuelle',      label: 'Annuel' },
 ];
-
 const PAYMENT_METHODS = ['Virement', 'Espèces', 'Chèque', 'Carte'];
 
 const fmt = (n: number) =>
     Number(n).toLocaleString('fr-MA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' MAD';
 
-function catMeta(cat: string) {
-    return CATEGORIES.find(c => c.value === cat) ?? CATEGORIES[CATEGORIES.length - 1];
-}
-
-function CatBadge({ cat }: { cat: string }) {
-    const m = catMeta(cat);
-    const Icon = m.icon;
+function CatBadge({ cat, categories }: { cat: string; categories: Category[] }) {
+    if (cat === 'salaire_employe') {
+        return (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400">
+                <User className="w-3 h-3" /> Salaire
+            </span>
+        );
+    }
+    const m = categories.find(c => c.value === cat) ?? categories[categories.length - 1];
+    const Icon = ICON_MAP[m?.icon_name ?? 'more-horizontal'] ?? MoreHorizontal;
     return (
-        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${m.bg} ${m.color}`}>
-            <Icon className="w-3 h-3" /> {m.label}
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${m?.bg_color ?? 'bg-slate-50 dark:bg-slate-800/40'} ${m?.color ?? 'text-slate-500'}`}>
+            <Icon className="w-3 h-3" /> {m?.label ?? cat}
         </span>
     );
 }
 
 const emptyForm = () => ({
-    category: 'loyer', description: '', amount: '', date: new Date().toISOString().slice(0, 10),
+    category: '',
+    description: '', amount: '',
+    date: new Date().toISOString().slice(0, 10),
     recurrence: 'ponctuelle', payment_method: 'Virement', status: 'a_payer', notes: '',
 });
 
 export default function ChargesIndex() {
-    const { charges, stats, filters } = usePage().props as unknown as {
-        charges: Charge[]; stats: Stats; filters: { search: string; category: string };
+    const { charges, categories, employees, stats, filters } = usePage().props as unknown as {
+        charges: Charge[]; categories: Category[];
+        employees: { uuid: string; nom: string; salaire_brut: number }[];
+        stats: Stats; filters: { search: string; category: string };
     };
     const { props } = usePage<{ errors?: Record<string, string> }>();
 
@@ -76,20 +83,20 @@ export default function ChargesIndex() {
     const [category, setCategory] = useState(filters.category || 'all');
     const [modal,    setModal]    = useState<'create' | 'edit' | null>(null);
     const [editing,  setEditing]  = useState<Charge | null>(null);
-    const [form,     setForm]     = useState(emptyForm());
+    const [form,     setForm]     = useState(() => emptyForm());
     const [processing, setProcessing] = useState(false);
 
     const { confirmState, confirm, closeConfirm } = useConfirmDialog();
 
-    // Open modal from URL param (from finances page link)
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-        if (params.get('modal') === 'new') { openCreate(); }
+        if (params.get('modal') === 'new') openCreate();
     }, []);
 
     useEffect(() => {
         const t = setTimeout(() => {
-            router.get('/charges', { search, category: category === 'all' ? undefined : category },
+            router.get('/charges',
+                { search, category: category === 'all' ? undefined : category },
                 { preserveState: true, preserveScroll: true, replace: true });
         }, 350);
         return () => clearTimeout(t);
@@ -151,7 +158,7 @@ export default function ChargesIndex() {
                 title={confirmState.title} description={confirmState.description}
                 onConfirm={confirmState.onConfirm} />
 
-            {/* Modal */}
+            {/* ── Create / Edit Modal ── */}
             {modal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
                     onClick={closeModal}>
@@ -175,11 +182,18 @@ export default function ChargesIndex() {
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Catégorie *</label>
-                                    <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
-                                        <SelectTrigger className="rounded-xl h-9"><SelectValue /></SelectTrigger>
+                                    <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v, description: '', amount: '' }))}>
+                                        <SelectTrigger className="rounded-xl h-9">
+                                            <SelectValue placeholder="Sélectionner…" />
+                                        </SelectTrigger>
                                         <SelectContent>
-                                            {CATEGORIES.map(c => (
-                                                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                                            {categories.map(c => (
+                                                <SelectItem key={c.value} value={c.value}>
+                                                    <span className="flex items-center gap-1.5">
+                                                        {(() => { const Icon = ICON_MAP[c.icon_name] ?? MoreHorizontal; return <Icon className="w-3 h-3" />; })()}
+                                                        {c.label}
+                                                    </span>
+                                                </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
@@ -191,13 +205,47 @@ export default function ChargesIndex() {
                                         className="rounded-xl h-9" required />
                                 </div>
                             </div>
-                            <div>
-                                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Description *</label>
-                                <Input value={form.description}
-                                    onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                                    placeholder="Ex. Loyer du local · Juillet"
-                                    className="rounded-xl h-9" required />
-                            </div>
+                            {form.category === 'salaires' ? (
+                                <div>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Employé *</label>
+                                    <Select
+                                        value={form.description}
+                                        onValueChange={v => {
+                                            const emp = employees.find(e => e.nom === v);
+                                            setForm(f => ({
+                                                ...f,
+                                                description: v,
+                                                amount: emp ? String(emp.salaire_brut) : f.amount,
+                                            }));
+                                        }}
+                                    >
+                                        <SelectTrigger className="rounded-xl h-9">
+                                            <SelectValue placeholder="Choisir un employé…" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {employees.length === 0
+                                                ? <SelectItem value="_none" disabled>Aucun employé actif</SelectItem>
+                                                : employees.map(e => (
+                                                    <SelectItem key={e.uuid} value={e.nom}>
+                                                        <span className="flex items-center gap-1.5">
+                                                            <User className="w-3 h-3" /> {e.nom}
+                                                            <span className="ml-auto text-xs text-muted-foreground font-mono">{e.salaire_brut.toLocaleString('fr-MA')} MAD</span>
+                                                        </span>
+                                                    </SelectItem>
+                                                ))
+                                            }
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            ) : (
+                                <div>
+                                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Description *</label>
+                                    <Input value={form.description}
+                                        onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                                        placeholder="Ex. Loyer du local · Juillet"
+                                        className="rounded-xl h-9" required />
+                                </div>
+                            )}
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Montant *</label>
@@ -241,7 +289,7 @@ export default function ChargesIndex() {
                             </div>
                             <div className="flex justify-end gap-2 pt-2">
                                 <Button type="button" variant="outline" className="rounded-xl" onClick={closeModal}>Annuler</Button>
-                                <Button type="submit" disabled={processing} className="rounded-xl bg-blue-600 hover:bg-blue-700">
+                                <Button type="submit" disabled={processing || !form.category || !form.description} className="rounded-xl bg-blue-600 hover:bg-blue-700">
                                     {processing ? 'Enregistrement…' : modal === 'create' ? 'Ajouter' : 'Mettre à jour'}
                                 </Button>
                             </div>
@@ -260,6 +308,10 @@ export default function ChargesIndex() {
                     </div>
                     <div className="flex gap-2">
                         <Button size="sm" variant="outline" className="rounded-xl"
+                            onClick={() => router.visit('/parametres/categories')}>
+                            <Settings className="h-3.5 w-3.5 mr-1.5" /> Catégories
+                        </Button>
+                        <Button size="sm" variant="outline" className="rounded-xl"
                             onClick={() => window.open('/charges/export/pdf', '_blank')}>
                             <Download className="h-3.5 w-3.5 mr-1.5" /> Exporter PDF
                         </Button>
@@ -275,7 +327,7 @@ export default function ChargesIndex() {
                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">Total charges (mois)</p>
                         <p className="text-xl font-bold text-foreground font-mono">{fmt(stats.total_mois)}</p>
                         <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                            <span className="w-2 h-2 rounded-full bg-orange-400 inline-block" /> Mensuel
+                            <span className="w-2 h-2 rounded-full bg-orange-400 inline-block" /> Charges + salaires
                         </div>
                     </div>
                     <div className="rounded-2xl border border-border bg-card p-4">
@@ -289,7 +341,7 @@ export default function ChargesIndex() {
                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">Salaires</p>
                         <p className="text-xl font-bold text-violet-600 dark:text-violet-400 font-mono">{fmt(stats.salaires_mois)}</p>
                         <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                            <span className="w-2 h-2 rounded-full bg-violet-400 inline-block" /> Masse salariale
+                            <span className="w-2 h-2 rounded-full bg-violet-400 inline-block" /> Charges + employés
                         </div>
                     </div>
                     <div className="rounded-2xl border border-border bg-card p-4">
@@ -310,12 +362,24 @@ export default function ChargesIndex() {
                             className="pl-9 rounded-xl h-9" />
                     </div>
                     <Select value={category} onValueChange={setCategory}>
-                        <SelectTrigger className="rounded-xl h-9 w-44">
+                        <SelectTrigger className="rounded-xl h-9 w-48">
                             <SelectValue placeholder="Toutes catégories" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">Toutes catégories</SelectItem>
-                            {CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                            <SelectItem value="salaire_employe">
+                                <span className="flex items-center gap-1.5">
+                                    <User className="w-3 h-3" /> Salaires employés
+                                </span>
+                            </SelectItem>
+                            {categories.map(c => (
+                                <SelectItem key={c.value} value={c.value}>
+                                    <span className="flex items-center gap-1.5">
+                                        {(() => { const Icon = ICON_MAP[c.icon_name] ?? MoreHorizontal; return <Icon className="w-3 h-3" />; })()}
+                                        {c.label}
+                                    </span>
+                                </SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                     <span className="ml-auto text-sm text-muted-foreground self-center">
@@ -330,7 +394,7 @@ export default function ChargesIndex() {
                             <thead className="bg-muted/40 text-xs font-bold uppercase text-muted-foreground border-b border-border/60">
                                 <tr>
                                     <th className="px-4 py-3 text-left w-28">Date</th>
-                                    <th className="px-4 py-3 text-left w-32">Catégorie</th>
+                                    <th className="px-4 py-3 text-left w-36">Catégorie</th>
                                     <th className="px-4 py-3 text-left">Description</th>
                                     <th className="px-4 py-3 text-center w-28">Récurrence</th>
                                     <th className="px-4 py-3 text-right w-32">Montant</th>
@@ -347,10 +411,17 @@ export default function ChargesIndex() {
                                         </td>
                                     </tr>
                                 ) : charges.map(c => (
-                                    <tr key={c.uuid} className="hover:bg-accent/30 transition-colors">
+                                    <tr key={c.uuid} className={`transition-colors ${c.readonly ? 'bg-violet-50/30 dark:bg-violet-950/10' : 'hover:bg-accent/30'}`}>
                                         <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">{c.date_display}</td>
-                                        <td className="px-4 py-3"><CatBadge cat={c.category} /></td>
-                                        <td className="px-4 py-3 font-medium text-foreground">{c.description}</td>
+                                        <td className="px-4 py-3"><CatBadge cat={c.category} categories={categories} /></td>
+                                        <td className="px-4 py-3 font-medium text-foreground">
+                                            {c.description}
+                                            {c.readonly && (
+                                                <span className="ml-2 text-[10px] font-bold text-violet-400 bg-violet-50 dark:bg-violet-950/40 px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                                                    Employés
+                                                </span>
+                                            )}
+                                        </td>
                                         <td className="px-4 py-3 text-center">
                                             {c.recurrence !== 'ponctuelle' ? (
                                                 <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
@@ -373,16 +444,27 @@ export default function ChargesIndex() {
                                             )}
                                         </td>
                                         <td className="px-4 py-3">
-                                            <div className="flex items-center gap-1 justify-end">
-                                                <button onClick={() => openEdit(c)}
-                                                    className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
-                                                    <Pencil className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button onClick={() => handleDelete(c)}
-                                                    className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-muted-foreground hover:text-red-600 transition-colors">
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
+                                            {!c.readonly && (
+                                                <div className="flex items-center gap-1 justify-end">
+                                                    <button onClick={() => openEdit(c)}
+                                                        className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
+                                                        <Pencil className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button onClick={() => handleDelete(c)}
+                                                        className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-muted-foreground hover:text-red-600 transition-colors">
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            )}
+                                            {c.readonly && (
+                                                <div className="flex justify-end">
+                                                    <button onClick={() => router.visit('/employees')}
+                                                        title="Gérer les employés"
+                                                        className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-violet-600 transition-colors">
+                                                        <User className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}

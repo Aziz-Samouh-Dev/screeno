@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ChargeCategoryController;
 use App\Http\Controllers\ChargeController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ClientTransactionController;
@@ -66,25 +67,36 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::resource('/settings/payment_methods', PaymentMethodController::class);
 
-    // GESTION — FINANCES
-    Route::get('/finances', [FinanceController::class, 'index'])->name('finances.index');
+    // GESTION — admin uniquement
+    Route::middleware('admin')->group(function () {
 
-    // GESTION — CHARGES
-    Route::get('/charges/export/pdf', [ChargeController::class, 'exportPdf'])->name('charges.export.pdf');
-    Route::get('/charges',            [ChargeController::class, 'index'])->name('charges.index');
-    Route::post('/charges',           [ChargeController::class, 'store'])->name('charges.store');
-    Route::put('/charges/{charge}',   [ChargeController::class, 'update'])->name('charges.update');
-    Route::delete('/charges/{charge}',[ChargeController::class, 'destroy'])->name('charges.destroy');
+        // Finances
+        Route::get('/finances', [FinanceController::class, 'index'])->name('finances.index');
 
-    // GESTION — EMPLOYÉS
-    Route::post('/employees/pay-all',          [EmployeeController::class, 'payAll'])->name('employees.pay-all');
-    Route::post('/employees/{employee}/pay',   [EmployeeController::class, 'pay'])->name('employees.pay');
-    Route::get('/employees/create',            [EmployeeController::class, 'create'])->name('employees.create');
-    Route::get('/employees/{employee}/edit',   [EmployeeController::class, 'edit'])->name('employees.edit');
-    Route::get('/employees',                   [EmployeeController::class, 'index'])->name('employees.index');
-    Route::post('/employees',                  [EmployeeController::class, 'store'])->name('employees.store');
-    Route::put('/employees/{employee}',        [EmployeeController::class, 'update'])->name('employees.update');
-    Route::delete('/employees/{employee}',     [EmployeeController::class, 'destroy'])->name('employees.destroy');
+        // Catégories de charges
+        Route::get('/parametres/categories',                    [ChargeCategoryController::class, 'index'])->name('charge-categories.index');
+        Route::post('/parametres/categories',                   [ChargeCategoryController::class, 'store'])->name('charge-categories.store');
+        Route::put('/parametres/categories/{chargeCategory}',   [ChargeCategoryController::class, 'update'])->name('charge-categories.update');
+        Route::delete('/parametres/categories/{chargeCategory}',[ChargeCategoryController::class, 'destroy'])->name('charge-categories.destroy');
+
+        // Charges
+        Route::get('/charges/export/pdf', [ChargeController::class, 'exportPdf'])->name('charges.export.pdf');
+        Route::get('/charges',            [ChargeController::class, 'index'])->name('charges.index');
+        Route::post('/charges',           [ChargeController::class, 'store'])->name('charges.store');
+        Route::put('/charges/{charge}',   [ChargeController::class, 'update'])->name('charges.update');
+        Route::delete('/charges/{charge}',[ChargeController::class, 'destroy'])->name('charges.destroy');
+
+        // Employés
+        Route::post('/employees/pay-all',          [EmployeeController::class, 'payAll'])->name('employees.pay-all');
+        Route::post('/employees/{employee}/pay',   [EmployeeController::class, 'pay'])->name('employees.pay');
+        Route::get('/employees/create',            [EmployeeController::class, 'create'])->name('employees.create');
+        Route::get('/employees/{employee}/edit',   [EmployeeController::class, 'edit'])->name('employees.edit');
+        Route::get('/employees',                   [EmployeeController::class, 'index'])->name('employees.index');
+        Route::post('/employees',                  [EmployeeController::class, 'store'])->name('employees.store');
+        Route::put('/employees/{employee}',        [EmployeeController::class, 'update'])->name('employees.update');
+        Route::delete('/employees/{employee}',     [EmployeeController::class, 'destroy'])->name('employees.destroy');
+
+    });
 
 });
 

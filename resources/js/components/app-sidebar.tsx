@@ -65,8 +65,12 @@ export function AppSidebar() {
                 <NavMain items={generalItems} label="Général" />
                 <div className="mx-3 my-1 h-px bg-sidebar-border/40" />
                 <NavMain items={operationsItems} label="Opérations" />
-                <div className="mx-3 my-1 h-px bg-sidebar-border/40" />
-                <NavMain items={gestionItems} label="Gestion" />
+                {isAdmin && (
+                    <>
+                        <div className="mx-3 my-1 h-px bg-sidebar-border/40" />
+                        <NavMain items={gestionItems} label="Gestion" />
+                    </>
+                )}
             </SidebarContent>
 
             <SidebarFooter>

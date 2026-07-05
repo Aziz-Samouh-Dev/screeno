@@ -198,8 +198,8 @@ class ProduitController extends Controller
                 Storage::disk('public')->delete($produit->image);
             }
             $validated['image'] = $request->file('image')->store('produits', 'public');
-        } elseif ($request->input('image') === null && $request->has('image')) {
-            // User wants to remove the image → delete old and set to null
+        } elseif ($request->boolean('remove_image')) {
+            // User explicitly removed the image
             if ($produit->image) {
                 Storage::disk('public')->delete($produit->image);
             }

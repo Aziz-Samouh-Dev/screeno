@@ -37,6 +37,18 @@ function stockBadge(qty: number, threshold: number) {
 
 const fmt = (n: number) => Number(n).toLocaleString('fr-MA', { minimumFractionDigits: 2 });
 
+function ProduitImg({ src, alt, className }: { src: string | null; alt: string; className?: string }) {
+    const [err, setErr] = useState(false);
+    if (!src || err) {
+        return <div className={`rounded-lg bg-muted flex items-center justify-center shrink-0 ${className ?? 'h-9 w-9'}`}>
+            <Package className="h-4 w-4 text-muted-foreground" />
+        </div>;
+    }
+    return <img src={`/storage/${src}`} alt={alt}
+        className={`${className ?? 'h-9 w-9'} rounded-lg object-cover shrink-0 border border-border`}
+        onError={() => setErr(true)} />;
+}
+
 export default function Index() {
     const { produits, filters, globalStats } = usePage().props as unknown as Props;
 
@@ -221,14 +233,7 @@ export default function Index() {
 
                                             <td className="px-4 py-3.5">
                                                 <div className="flex items-center gap-3">
-                                                    {p.image ? (
-                                                        <img src={`/storage/${p.image}`} alt={p.nom}
-                                                            className="h-9 w-9 rounded-lg object-cover shrink-0 border border-border" />
-                                                    ) : (
-                                                        <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                                                            <Package className="h-4 w-4 text-muted-foreground" />
-                                                        </div>
-                                                    )}
+                                                    <ProduitImg src={p.image} alt={p.nom} />
                                                     <div>
                                                         <p className="font-semibold text-foreground group-hover:text-violet-700 dark:group-hover:text-violet-400 transition-colors text-sm">{p.nom}</p>
                                                         <p className="text-xs font-mono text-muted-foreground">{p.sku}</p>

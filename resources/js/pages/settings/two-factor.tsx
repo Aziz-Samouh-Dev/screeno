@@ -19,7 +19,7 @@ type Props = {
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
-        title: 'Two-Factor Authentication',
+        title: 'Authentification à deux facteurs',
         href: show.url(),
     },
 ];
@@ -42,25 +42,22 @@ export default function TwoFactor({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Two-Factor Authentication" />
+            <Head title="Authentification à deux facteurs" />
 
-            <h1 className="sr-only">Two-Factor Authentication Settings</h1>
+            <h1 className="sr-only">Authentification à deux facteurs Settings</h1>
 
             <SettingsLayout>
                 <div className="space-y-6">
                     <Heading
                         variant="small"
-                        title="Two-Factor Authentication"
-                        description="Manage your two-factor authentication settings"
+                        title="Authentification à deux facteurs"
+                        description="Gérez vos paramètres d'authentification à deux facteurs"
                     />
                     {twoFactorEnabled ? (
                         <div className="flex flex-col items-start justify-start space-y-4">
-                            <Badge variant="default">Enabled</Badge>
+                            <Badge variant="default">Activé</Badge>
                             <p className="text-muted-foreground">
-                                With two-factor authentication enabled, you will
-                                be prompted for a secure, random pin during
-                                login, which you can retrieve from the
-                                TOTP-supported application on your phone.
+                                Avec l'authentification à deux facteurs activée, un code PIN sécurisé vous sera demandé lors de la connexion. Vous pouvez le récupérer depuis l'application compatible TOTP sur votre téléphone.
                             </p>
 
                             <TwoFactorRecoveryCodes
@@ -77,7 +74,7 @@ export default function TwoFactor({
                                             type="submit"
                                             disabled={processing}
                                         >
-                                            <ShieldBan /> Disable 2FA
+                                            <ShieldBan /> Désactiver 2FA
                                         </Button>
                                     )}
                                 </Form>
@@ -85,12 +82,9 @@ export default function TwoFactor({
                         </div>
                     ) : (
                         <div className="flex flex-col items-start justify-start space-y-4">
-                            <Badge variant="destructive">Disabled</Badge>
+                            <Badge variant="destructive">Désactivé</Badge>
                             <p className="text-muted-foreground">
-                                When you enable two-factor authentication, you
-                                will be prompted for a secure pin during login.
-                                This pin can be retrieved from a TOTP-supported
-                                application on your phone.
+                                En activant l'authentification à deux facteurs, un code PIN sécurisé vous sera demandé lors de la connexion. Ce code peut être récupéré depuis une application compatible TOTP sur votre téléphone.
                             </p>
 
                             <div>
@@ -99,7 +93,7 @@ export default function TwoFactor({
                                         onClick={() => setShowSetupModal(true)}
                                     >
                                         <ShieldCheck />
-                                        Continue Setup
+                                        Continuer la configuration
                                     </Button>
                                 ) : (
                                     <Form
@@ -115,7 +109,7 @@ export default function TwoFactor({
                                                 disabled={processing}
                                             >
                                                 <ShieldCheck />
-                                                Enable 2FA
+                                                Activer 2FA
                                             </Button>
                                         )}
                                     </Form>

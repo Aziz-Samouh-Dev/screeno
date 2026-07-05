@@ -42,6 +42,7 @@ export default function Show({ produit }: Props) {
 
     const [showModal, setShowModal] = useState(false);
     const [copied, setCopied]       = useState(false);
+    const [imgErr, setImgErr]       = useState(false);
 
     const si     = stockInfo(produit.stock_quantity, produit.stock_alert_threshold);
     const margin = Number(produit.sale_price) - Number(produit.purchase_price);
@@ -52,15 +53,15 @@ export default function Show({ produit }: Props) {
         try {
             await navigator.clipboard.writeText(produit.sku);
             setCopied(true);
-            toast.success('SKU copied to clipboard');
+            toast.success('SKU copié dans le presse-papiers');
             setTimeout(() => setCopied(false), 2000);
         } catch {
-            toast.error('Failed to copy SKU');
+            toast.error('Erreur lors de la copie du SKU');
         }
     };
 
     const handleDelete = () => {
-        if (confirm('Delete this product? This cannot be undone.'))
+        if (confirm('Supprimer ce produit ? Cette action est irréversible.'))
             router.delete(`/produits/${produit.uuid}`);
     };
 
@@ -99,11 +100,13 @@ export default function Show({ produit }: Props) {
                         {/* Image */}
                         <div className="rounded-3xl border border-border bg-card shadow-sm overflow-hidden">
                             <div
-                                className={`aspect-square ${produit.image ? 'cursor-zoom-in' : ''} bg-muted/40 flex items-center justify-center overflow-hidden`}
-                                onClick={() => produit.image && setShowModal(true)}
+                                className={`aspect-square ${produit.image && !imgErr ? 'cursor-zoom-in' : ''} bg-muted/40 flex items-center justify-center overflow-hidden`}
+                                onClick={() => produit.image && !imgErr && setShowModal(true)}
                             >
-                                {produit.image ? (
-                                    <img src={`/storage/${produit.image}`} alt={produit.nom} className="w-full h-full object-cover" />
+                                {produit.image && !imgErr ? (
+                                    <img src={`/storage/${produit.image}`} alt={produit.nom}
+                                        className="w-full h-full object-cover"
+                                        onError={() => setImgErr(true)} />
                                 ) : (
                                     <div className="flex flex-col items-center gap-2 text-muted-foreground/40">
                                         <ImageOff className="h-12 w-12" />
@@ -232,7 +235,7 @@ export default function Show({ produit }: Props) {
             </div>
 
             {/* IMAGE MODAL */}
-            {showModal && produit.image && (
+            {showModal && produit.image && !imgErr && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
                     onClick={() => setShowModal(false)}>
                     <button className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"

@@ -22,12 +22,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const formSchema = z.object({
-    nom:                    z.string().min(1, { message: 'Product name is required' }),
+    nom:                    z.string().min(1, { message: 'Le nom du produit est requis' }),
     image:                  z.any().optional(),
     description:            z.string().optional(),
-    purchase_price:         z.preprocess(v => Number(v), z.number().min(0, { message: 'Purchase price required' })),
-    sale_price:             z.preprocess(v => Number(v), z.number().min(0, { message: 'Sale price required' })),
-    stock_quantity:         z.preprocess(v => Number(v), z.number().min(0, { message: 'Stock quantity required' })),
+    purchase_price:         z.preprocess(v => Number(v), z.number().min(0, { message: "Prix d'achat requis" })),
+    sale_price:             z.preprocess(v => Number(v), z.number().min(0, { message: 'Prix de vente requis' })),
+    stock_quantity:         z.preprocess(v => Number(v), z.number().min(0, { message: 'Quantité en stock requise' })),
     stock_alert_threshold:  z.preprocess(v => Number(v), z.number().min(0)),
     supplier_id:            z.any().optional(),
 });

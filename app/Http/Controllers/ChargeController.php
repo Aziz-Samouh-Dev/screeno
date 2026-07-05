@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Charge;
+use App\Models\ChargeCategory;
 use App\Models\CompanyProfile;
+use App\Models\Employee;
+use App\Models\EmployeePayment;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,6 +15,20 @@ class ChargeController extends Controller
 {
     public function index(Request $request)
     {
+        // Dynamic categories from DB (with fallback seed if empty)
+        $categories = ChargeCategory::orderBy('sort_order')->orderBy('nom')->get()
+            ->map(fn ($c) => [
+                'value'     => $c->slug,
+                'label'     => $c->nom,
+                'color'     => $c->color,
+                'bg_color'  => $c->bg_color,
+                'icon_name' => $c->icon_name,
+                'is_default'=> $c->is_default,
+            ]);
+
+        // Valid slugs for filtering
+        $validSlugs = $categories->pluck('value')->toArray();
+
         $query = Charge::query();
 
         if ($request->search) {
@@ -32,24 +49,73 @@ class ChargeController extends Controller
             'payment_method' => $c->payment_method,
             'status'         => $c->status,
             'notes'          => $c->notes,
-        ]);
+            'readonly'       => false,
+        ])->toArray();
+
+        // Merge employee salary payments as read-only rows
+        $epQuery = EmployeePayment::with('employee')->whereNotNull('paid_at');
+
+        if ($request->search) {
+            $epQuery->whereHas('employee', fn ($q) => $q->where('nom', 'like', '%' . $request->search . '%'));
+        }
+        if ($request->category && $request->category !== 'all' && $request->category !== 'salaire_employe') {
+            // If filtering by a non-salary category, skip employee payments
+            $epQuery->whereNull('id'); // empty result
+        }
+
+        $salaryRows = $epQuery->get()->map(fn ($ep) => [
+            'uuid'           => 'ep_' . $ep->id,
+            'category'       => 'salaire_employe',
+            'description'    => ($ep->employee->nom ?? 'Employé') . ' · Salaire ' .
+                                \Carbon\Carbon::create($ep->year, $ep->month)->locale('fr')->isoFormat('MMMM YYYY'),
+            'amount'         => (float) $ep->amount,
+            'date'           => $ep->paid_at->format('Y-m-d'),
+            'date_display'   => $ep->paid_at->format('d M. Y'),
+            'recurrence'     => 'mensuelle',
+            'payment_method' => null,
+            'status'         => 'paye',
+            'notes'          => null,
+            'readonly'       => true,
+        ])->toArray();
+
+        // Merge and sort by date desc
+        $allRows = collect(array_merge($charges, $salaryRows))
+            ->sortByDesc('date')
+            ->values()
+            ->toArray();
 
         $now   = now();
         $month = $now->month;
         $year  = $now->year;
 
+        $chargesMonthTotal = (float) Charge::whereMonth('date', $month)->whereYear('date', $year)->sum('amount');
+        $salairesMonthTotal = (float) EmployeePayment::where('month', $month)->where('year', $year)
+            ->whereNotNull('paid_at')->sum('amount');
+
         $stats = [
-            'total_mois'     => round((float) Charge::whereMonth('date', $month)->whereYear('date', $year)->sum('amount'), 2),
+            'total_mois'     => round($chargesMonthTotal + $salairesMonthTotal, 2),
             'loyer_mois'     => round((float) Charge::whereMonth('date', $month)->whereYear('date', $year)->where('category', 'loyer')->sum('amount'), 2),
-            'salaires_mois'  => round((float) Charge::whereMonth('date', $month)->whereYear('date', $year)->where('category', 'salaires')->sum('amount'), 2),
+            'salaires_mois'  => round(
+                (float) Charge::whereMonth('date', $month)->whereYear('date', $year)->where('category', 'salaires')->sum('amount')
+                + $salairesMonthTotal, 2
+            ),
             'a_payer'        => round((float) Charge::where('status', 'a_payer')->sum('amount'), 2),
             'a_payer_count'  => Charge::where('status', 'a_payer')->count(),
         ];
 
+        $employees = Employee::where('status', 'actif')->orderBy('nom')->get()
+            ->map(fn ($e) => [
+                'uuid'         => $e->uuid,
+                'nom'          => $e->nom,
+                'salaire_brut' => (float) $e->salaire_brut,
+            ]);
+
         return Inertia::render('charges/Index', [
-            'charges' => $charges,
-            'stats'   => $stats,
-            'filters' => [
+            'charges'    => $allRows,
+            'categories' => $categories,
+            'employees'  => $employees,
+            'stats'      => $stats,
+            'filters'    => [
                 'search'   => $request->search   ?? '',
                 'category' => $request->category ?? 'all',
             ],
@@ -58,8 +124,10 @@ class ChargeController extends Controller
 
     public function store(Request $request)
     {
+        $validSlugs = ChargeCategory::pluck('slug')->toArray();
+
         $validated = $request->validate([
-            'category'       => 'required|in:loyer,salaires,energie,transport,taxes,assurance,telecom,autre',
+            'category'       => 'required|in:' . implode(',', $validSlugs),
             'description'    => 'required|string|max:255',
             'amount'         => 'required|numeric|min:0',
             'date'           => 'required|date',
@@ -76,8 +144,10 @@ class ChargeController extends Controller
 
     public function update(Request $request, Charge $charge)
     {
+        $validSlugs = ChargeCategory::pluck('slug')->toArray();
+
         $validated = $request->validate([
-            'category'       => 'required|in:loyer,salaires,energie,transport,taxes,assurance,telecom,autre',
+            'category'       => 'required|in:' . implode(',', $validSlugs),
             'description'    => 'required|string|max:255',
             'amount'         => 'required|numeric|min:0',
             'date'           => 'required|date',
@@ -112,11 +182,8 @@ class ChargeController extends Controller
         $total   = $charges->sum('amount');
         $company = (CompanyProfile::first() ?? new CompanyProfile())->toArray();
 
-        $categoryLabels = [
-            'loyer' => 'Loyer', 'salaires' => 'Salaires', 'energie' => 'Énergie',
-            'transport' => 'Transport', 'taxes' => 'Taxes', 'assurance' => 'Assurance',
-            'telecom' => 'Télécom', 'autre' => 'Autre',
-        ];
+        $categoryLabels = ChargeCategory::pluck('nom', 'slug')->toArray();
+        $categoryLabels['salaire_employe'] = 'Salaire employé';
 
         $pdf = Pdf::loadView('charges.export_pdf', compact('charges', 'total', 'company', 'categoryLabels'))
             ->setPaper('a4', 'portrait');

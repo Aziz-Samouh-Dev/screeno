@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 const formSchema = z.object({
-    nom:                   z.string().min(1, { message: 'Product name is required' }),
+    nom:                   z.string().min(1, { message: 'Le nom du produit est requis' }),
     image:                 z.any().optional(),
     description:           z.string().optional(),
     purchase_price:        z.preprocess(v => Number(v), z.number().min(0)),
@@ -36,9 +36,9 @@ export default function Edit() {
     const [removeImage, setRemoveImage] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Products', href: '/produits' },
+        { title: 'Produits', href: '/produits' },
         { title: produit.nom, href: `/produits/${produit.uuid}` },
-        { title: 'Edit', href: `/produits/${produit.uuid}/edit` },
+        { title: 'Modifier', href: `/produits/${produit.uuid}/edit` },
     ];
 
     const form = useForm<FormValues>({
@@ -72,7 +72,7 @@ export default function Edit() {
 
         if (values.supplier_id) fd.append('supplier_id', String(values.supplier_id));
         if (values.image)  fd.append('image', values.image);
-        else if (removeImage) fd.append('image', '');
+        if (removeImage)   fd.append('remove_image', '1');
 
         router.post(`/produits/${produit.uuid}`, fd, {
             forceFormData: true,
@@ -87,7 +87,7 @@ export default function Edit() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`Edit · ${produit.nom}`} />
+            <Head title={`Modifier : ${produit.nom}`} />
 
             <div className="flex flex-col gap-6 p-6">
 
@@ -103,7 +103,7 @@ export default function Edit() {
                         </div>
                     </div>
                     <Button variant="outline" className="rounded-xl" onClick={() => router.visit(`/produits/${produit.uuid}`)}>
-                        <Eye className="mr-2 h-4 w-4" /> View Product
+                        <Eye className="mr-2 h-4 w-4" /> Voir le produit
                     </Button>
                 </div>
 

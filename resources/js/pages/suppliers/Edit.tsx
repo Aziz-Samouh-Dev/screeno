@@ -12,17 +12,17 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Suppliers', href: '/suppliers' },
+    { title: 'Fournisseurs', href: '/suppliers' },
     { title: 'Modifier le fournisseur', href: '/suppliers' },
 ];
 
 const formSchema = z.object({
-    nom: z.string().min(1, { message: 'Supplier name is required' }),
+    nom: z.string().min(1, { message: 'Le nom du fournisseur est requis' }),
     email: z.string().email().optional(),
     telephone: z
         .string()
-        .min(1, { message: 'Phone is required' })
-        .regex(/^[0-9]+$/, { message: 'Phone must contain only numbers' }),
+        .min(1, { message: 'Le téléphone est requis' })
+        .regex(/^[0-9]+$/, { message: 'Le téléphone ne doit contenir que des chiffres' }),
     adresse: z.string().optional(),
     ville: z.string().optional(),
     notes: z.string().optional(),
@@ -90,7 +90,7 @@ export default function EditSupplier() {
                                     <span className="text-lg font-semibold">Modifier le fournisseur</span>
                                     <br />
                                     <span className="text-sm text-muted-foreground">
-                                        Update supplier information.
+                                        Modifier les informations du fournisseur.
                                     </span>
                                 </p>
                             </div>
@@ -105,7 +105,7 @@ export default function EditSupplier() {
                                         data-invalid={fieldState.invalid}
                                     >
                                         <FieldLabel>Nom complet *</FieldLabel>
-                                        <Input placeholder="Supplier Name" {...field} />
+                                        <Input placeholder="Nom du fournisseur" {...field} />
                                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                                     </Field>
                                 )}
@@ -139,7 +139,7 @@ export default function EditSupplier() {
                                         <FieldLabel>Téléphone *</FieldLabel>
                                         <Input
                                             type="tel"
-                                            placeholder="Enter phone number"
+                                            placeholder="Entrez le numéro de téléphone"
                                             {...field}
                                             onInput={(e: React.FormEvent<HTMLInputElement>) => {
                                                 const target = e.target as HTMLInputElement;
@@ -161,7 +161,7 @@ export default function EditSupplier() {
                                         <FieldLabel>Statut</FieldLabel>
                                         <Select value={field.value} onValueChange={field.onChange}>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select status" />
+                                                <SelectValue placeholder="Choisir un statut" />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="active">Actif</SelectItem>
@@ -179,7 +179,7 @@ export default function EditSupplier() {
                                 render={({ field }) => (
                                     <Field className="col-span-12 flex flex-col gap-2">
                                         <FieldLabel>Adresse</FieldLabel>
-                                        <Textarea className="h-20" placeholder="Street, building..." {...field} />
+                                        <Textarea className="h-20" placeholder="Rue, bâtiment..." {...field} />
                                     </Field>
                                 )}
                             />
@@ -203,7 +203,7 @@ export default function EditSupplier() {
                                 render={({ field }) => (
                                     <Field className="col-span-12 flex flex-col gap-2">
                                         <FieldLabel>Notes</FieldLabel>
-                                        <Textarea className="h-28" placeholder="Internal notes..." {...field} />
+                                        <Textarea className="h-28" placeholder="Notes internes..." {...field} />
                                     </Field>
                                 )}
                             />

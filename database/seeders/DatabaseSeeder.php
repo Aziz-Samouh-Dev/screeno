@@ -297,5 +297,10 @@ class DatabaseSeeder extends Seeder
         // ]);
         // Produit::find($produitIds[4])?->increment('stock_quantity', 1);
         // Running balance = 44050 − 850 − 1800 − 20000 = +21400
+
+        // ══════════════════════════════════════════
+        // 8. CHARGE CATEGORIES
+        // ══════════════════════════════════════════
+        $this->call(ChargeCategorySeeder::class);
     }
 }

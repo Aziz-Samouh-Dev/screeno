@@ -27,6 +27,7 @@ interface PaginatedRecords {
 interface Props {
     records: PaginatedRecords;
     totalQty: number;
+    suppliers?: unknown[];
     filters: { search: string };
 }
 

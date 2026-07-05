@@ -8,6 +8,7 @@ use App\Models\DamagedStock;
 use App\Models\PaymentMethod;
 use App\Models\Produit;
 use App\Models\CompanyProfile;
+use App\Models\Supplier;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -464,6 +465,11 @@ class ClientTransactionController extends Controller
 
         $totalQty = DamagedStock::sum('quantity');
 
+        $suppliers = Supplier::orderBy('nom')->get(['uuid', 'nom'])->map(fn ($s) => [
+            'uuid' => $s->uuid,
+            'nom'  => $s->nom,
+        ]);
+
         return Inertia::render('Stock', [
             'records'  => $records->through(fn ($r) => [
                 'id'           => $r->id,
@@ -473,8 +479,9 @@ class ClientTransactionController extends Controller
                 'client_nom'   => $r->client->nom,
                 'created_at'   => $r->created_at->toIso8601String(),
             ]),
-            'totalQty' => (int) $totalQty,
-            'filters'  => ['search' => $request->search ?? ''],
+            'totalQty'  => (int) $totalQty,
+            'suppliers' => $suppliers,
+            'filters'   => ['search' => $request->search ?? ''],
         ]);
     }
 }
