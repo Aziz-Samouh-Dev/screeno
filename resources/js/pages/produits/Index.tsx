@@ -44,7 +44,7 @@ function ProduitImg({ src, alt, className }: { src: string | null; alt: string; 
             <Package className="h-4 w-4 text-muted-foreground" />
         </div>;
     }
-    return <img src={`/storage/${src}`} alt={alt}
+    return <img src={`/file/${src}`} alt={alt}
         className={`${className ?? 'h-9 w-9'} rounded-lg object-cover shrink-0 border border-border`}
         onError={() => setErr(true)} />;
 }

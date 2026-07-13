@@ -104,7 +104,7 @@ export default function Show({ produit }: Props) {
                                 onClick={() => produit.image && !imgErr && setShowModal(true)}
                             >
                                 {produit.image && !imgErr ? (
-                                    <img src={`/storage/${produit.image}`} alt={produit.nom}
+                                    <img src={`/file/${produit.image}`} alt={produit.nom}
                                         className="w-full h-full object-cover"
                                         onError={() => setImgErr(true)} />
                                 ) : (
@@ -243,7 +243,7 @@ export default function Show({ produit }: Props) {
                         <X className="h-5 w-5" />
                     </button>
                     <img
-                        src={`/storage/${produit.image}`}
+                        src={`/file/${produit.image}`}
                         alt={produit.nom}
                         className="max-w-[90vw] max-h-[90vh] object-contain rounded-2xl shadow-2xl"
                         onClick={e => e.stopPropagation()}

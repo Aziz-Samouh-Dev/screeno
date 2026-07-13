@@ -32,7 +32,7 @@ type FormValues = z.infer<typeof formSchema>;
 export default function Edit() {
     const { produit, suppliers } = usePage().props as any;
     const [processing, setProcessing] = useState(false);
-    const [preview, setPreview]       = useState<string | null>(produit.image ? `/storage/${produit.image}` : null);
+    const [preview, setPreview]       = useState<string | null>(produit.image ? `/file/${produit.image}` : null);
     const [removeImage, setRemoveImage] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [

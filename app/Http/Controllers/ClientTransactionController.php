@@ -451,7 +451,7 @@ class ClientTransactionController extends Controller
 
     public function stockList(Request $request)
     {
-        $query = DamagedStock::with('client', 'product')
+        $query = DamagedStock::with('client', 'product.supplier')
             ->orderBy('created_at', 'desc');
 
         if ($request->search) {
@@ -472,12 +472,15 @@ class ClientTransactionController extends Controller
 
         return Inertia::render('Stock', [
             'records'  => $records->through(fn ($r) => [
-                'id'           => $r->id,
-                'product_name' => $r->product_name,
-                'quantity'     => $r->quantity,
-                'client_uuid'  => $r->client->uuid,
-                'client_nom'   => $r->client->nom,
-                'created_at'   => $r->created_at->toIso8601String(),
+                'id'            => $r->id,
+                'product_id'    => $r->product_id,
+                'product_name'  => $r->product_name,
+                'quantity'      => $r->quantity,
+                'client_uuid'   => $r->client->uuid,
+                'client_nom'    => $r->client->nom,
+                'supplier_uuid' => $r->product?->supplier?->uuid,
+                'supplier_nom'  => $r->product?->supplier?->nom,
+                'created_at'    => $r->created_at->toIso8601String(),
             ]),
             'totalQty'  => (int) $totalQty,
             'suppliers' => $suppliers,

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BusinessAccount;
 use App\Models\CompanyProfile;
 use App\Models\DamagedStock;
 use App\Models\Produit;
@@ -40,6 +41,22 @@ class SupplierTransactionController extends Controller
             'items.*.stock_alert_threshold' => 'nullable|integer|min:0',
             'notes'                     => 'nullable|string',
         ]);
+
+        // Balance check — reject if purchase total exceeds available funds
+        $purchaseTotal = collect($validated['items'])
+            ->sum(fn ($i) => (float) $i['unit_price'] * (int) $i['quantity']);
+
+        $balance = BusinessAccount::main()->computeBalance();
+
+        if ($balance > 0 && $purchaseTotal > $balance) {
+            return back()->withInput()->withErrors([
+                'purchase_error' => sprintf(
+                    'Solde insuffisant. Solde disponible : %s MAD. Montant demandé : %s MAD.',
+                    number_format($balance, 2, ',', ' '),
+                    number_format($purchaseTotal, 2, ',', ' ')
+                ),
+            ]);
+        }
 
         try {
             DB::transaction(function () use ($validated, $supplier) {
@@ -88,37 +105,10 @@ class SupplierTransactionController extends Controller
 
     public function returnForm(Supplier $supplier)
     {
-        $purchases = SupplierTransaction::where('supplier_id', $supplier->id)
-            ->where('type', 'F')->whereNotNull('product_id')->get();
-
-        $returns = SupplierTransaction::where('supplier_id', $supplier->id)
-            ->where('type', 'R')->whereNotNull('product_id')
-            ->get()->groupBy('product_id');
-
-        $returnableProducts = $purchases
-            ->groupBy('product_id')
-            ->map(function ($txns, $productId) use ($returns) {
-                $totalPurchased = $txns->sum('quantity');
-                $totalReturned  = isset($returns[$productId])
-                    ? $returns[$productId]->sum('quantity') : 0;
-                $available = $totalPurchased - $totalReturned;
-                if ($available <= 0) return null;
-
-                $product = Produit::find($productId);
-                return [
-                    'product_id'      => (int) $productId,
-                    'product_name'    => $txns->first()->product_name,
-                    'total_purchased' => $totalPurchased,
-                    'total_returned'  => $totalReturned,
-                    'available'       => $available,
-                    'stock_quantity'  => $product?->stock_quantity ?? 0,
-                    'unit_price'      => round($txns->avg('unit_price'), 2),
-                ];
-            })
-            ->filter()->values();
-
-        // Damaged stock items for this supplier's products
-        $supplierProductIds = $purchases->pluck('product_id')->unique()->filter()->values();
+        // Only damaged-stock returns are supported
+        $supplierProductIds = SupplierTransaction::where('supplier_id', $supplier->id)
+            ->where('type', 'F')->whereNotNull('product_id')
+            ->pluck('product_id')->unique()->filter()->values();
 
         $damagedProducts = DamagedStock::selectRaw('product_id, product_name, SUM(quantity) as total_qty')
             ->whereIn('product_id', $supplierProductIds)
@@ -135,9 +125,8 @@ class SupplierTransactionController extends Controller
             ->values();
 
         return Inertia::render('suppliers/Return', [
-            'supplier'           => $supplier->only(['uuid', 'nom', 'telephone']),
-            'returnableProducts' => $returnableProducts,
-            'damagedProducts'    => $damagedProducts,
+            'supplier'        => $supplier->only(['uuid', 'nom', 'telephone']),
+            'damagedProducts' => $damagedProducts,
         ]);
     }
 
@@ -239,7 +228,7 @@ class SupplierTransactionController extends Controller
             return back()->withErrors(['return_error' => $e->getMessage()]);
         }
 
-        return redirect()->route('suppliers.ledger', $supplier)
+        return redirect()->route('stock.index')
             ->with('success', 'Retour enregistré avec succès.');
     }
 

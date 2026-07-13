@@ -12,11 +12,23 @@ use App\Http\Controllers\ProduitController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplierTransactionController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
+
+// Serve public-disk files through PHP (works with php artisan serve + Windows junctions)
+Route::get('/file/{path}', function (string $path) {
+    abort_if(str_contains($path, '..'), 400);
+    $disk = Storage::disk('public');
+    abort_if(!$disk->exists($path), 404);
+    return response($disk->get($path), 200, [
+        'Content-Type'  => $disk->mimeType($path),
+        'Cache-Control' => 'public, max-age=86400, immutable',
+    ]);
+})->where('path', '.*')->name('file.serve');
 
 Route::get('dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
@@ -71,7 +83,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('admin')->group(function () {
 
         // Finances
-        Route::get('/finances', [FinanceController::class, 'index'])->name('finances.index');
+        Route::get('/finances',          [FinanceController::class, 'index'])->name('finances.index');
+        Route::post('/finances/capital', [FinanceController::class, 'updateCapital'])->name('finances.capital');
 
         // Catégories de charges
         Route::get('/parametres/categories',                    [ChargeCategoryController::class, 'index'])->name('charge-categories.index');

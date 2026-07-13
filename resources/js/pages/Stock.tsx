@@ -1,18 +1,22 @@
 'use client';
 
-import { useState } from 'react';
-import { Head, router } from '@inertiajs/react';
+import { useState, useEffect } from 'react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { toast } from 'sonner';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Warehouse, Search, X, ExternalLink } from 'lucide-react';
+import { Warehouse, Search, X, ExternalLink, RotateCcw, Truck } from 'lucide-react';
 
 interface StockRecord {
     id: number;
+    product_id: number;
     product_name: string;
     quantity: number;
     client_uuid: string;
     client_nom: string;
+    supplier_uuid: string | null;
+    supplier_nom: string | null;
     created_at: string;
 }
 
@@ -27,7 +31,6 @@ interface PaginatedRecords {
 interface Props {
     records: PaginatedRecords;
     totalQty: number;
-    suppliers?: unknown[];
     filters: { search: string };
 }
 
@@ -46,7 +49,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Stock({ records, totalQty, filters: sf }: Props) {
+    const { props } = usePage<{ flash?: { success?: string } }>();
     const [search, setSearch] = useState(sf.search);
+
+    useEffect(() => {
+        if (props.flash?.success) toast.success(props.flash.success);
+    }, [props.flash?.success]);
 
     const apply = () => {
         router.get('/stock', { search: search || undefined }, { replace: true });
@@ -107,13 +115,14 @@ export default function Stock({ records, totalQty, filters: sf }: Props) {
                                     <th className="px-5 py-3 text-left">Produit</th>
                                     <th className="px-5 py-3 text-center w-24">Quantité</th>
                                     <th className="px-5 py-3 text-left">Client</th>
-                                    <th className="px-5 py-3 w-10" />
+                                    <th className="px-5 py-3 text-left">Fournisseur</th>
+                                    <th className="px-5 py-3 w-28 text-center">Retour</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border/60">
                                 {records.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-5 py-16 text-center text-muted-foreground">
+                                        <td colSpan={6} className="px-5 py-16 text-center text-muted-foreground">
                                             <Warehouse className="w-10 h-10 mx-auto opacity-20 mb-2" />
                                             <p>Aucun article endommagé enregistré</p>
                                         </td>
@@ -133,16 +142,36 @@ export default function Stock({ records, totalQty, filters: sf }: Props) {
                                         <td className="px-5 py-3">
                                             <button type="button"
                                                 onClick={() => router.visit(`/clients/${r.client_uuid}/ledger`)}
-                                                className="font-medium text-foreground/90 hover:text-orange-600 dark:hover:text-orange-400 hover:underline text-left">
+                                                className="font-medium text-foreground/90 hover:text-orange-600 dark:hover:text-orange-400 hover:underline text-left flex items-center gap-1">
                                                 {r.client_nom}
+                                                <ExternalLink className="h-3 w-3 opacity-50" />
                                             </button>
                                         </td>
+                                        <td className="px-5 py-3">
+                                            {r.supplier_nom ? (
+                                                <button type="button"
+                                                    onClick={() => router.visit(`/suppliers/${r.supplier_uuid}`)}
+                                                    className="font-medium text-foreground/90 hover:text-blue-600 dark:hover:text-blue-400 hover:underline text-left flex items-center gap-1">
+                                                    <Truck className="h-3.5 w-3.5 opacity-60 shrink-0" />
+                                                    {r.supplier_nom}
+                                                </button>
+                                            ) : (
+                                                <span className="text-muted-foreground text-xs italic">Aucun</span>
+                                            )}
+                                        </td>
                                         <td className="px-5 py-3 text-center">
-                                            <button type="button"
-                                                onClick={() => router.visit(`/clients/${r.client_uuid}/ledger`)}
-                                                className="text-muted-foreground hover:text-foreground transition-colors">
-                                                <ExternalLink className="h-3.5 w-3.5" />
-                                            </button>
+                                            {r.supplier_uuid ? (
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="rounded-lg h-7 px-2.5 text-xs border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/30"
+                                                    onClick={() => router.visit(`/suppliers/${r.supplier_uuid}/return`)}>
+                                                    <RotateCcw className="h-3 w-3 mr-1" />
+                                                    Retourner
+                                                </Button>
+                                            ) : (
+                                                <span className="text-muted-foreground/40 text-xs">—</span>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
