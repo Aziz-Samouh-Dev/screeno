@@ -7,7 +7,7 @@ import {
     Users, Truck, ArrowUpRight, ArrowDownRight,
     ChevronLeft, ChevronRight, PiggyBank, BarChart3,
     AlertTriangle, Landmark, Package,
-    Plus, X, CheckCircle2,
+    Plus, X, CheckCircle2, ArrowRight,
 } from 'lucide-react';
 import { useAppearance } from '@/hooks/use-appearance';
 import {
@@ -19,21 +19,19 @@ import { toast } from 'sonner';
 
 ChartJS.register(
     CategoryScale, LinearScale, PointElement, LineElement,
-    ArcElement, Tooltip, Legend, Filler
+    ArcElement, Tooltip, Legend, Filler,
 );
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Finances', href: '/finances' }];
 
 const MONTHS_FR = [
-    'Janvier','Février','Mars','Avril','Mai','Juin',
-    'Juillet','Août','Septembre','Octobre','Novembre','Décembre',
+    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
 ];
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────
 
-interface Account {
-    name: string; initial_capital: number; balance: number; currency: string;
-}
+interface Account { name: string; initial_capital: number; balance: number; currency: string }
 interface Global {
     total_sales: number; total_purchases: number; cogs: number;
     gross_profit: number; gross_margin_pct: number;
@@ -50,7 +48,7 @@ interface Soldes { clients: number; fournisseurs: number }
 interface TrendPoint { label: string; revenue: number; charges: number; gross_profit: number }
 interface SortieRow  { key: string; label: string; amount: number; color: string }
 
-// ── Formatters ─────────────────────────────────────────────────────────────
+// ── Formatters ────────────────────────────────────────────────────────────
 
 const fmtK = (n: number) => {
     const abs = Math.abs(n);
@@ -59,69 +57,92 @@ const fmtK = (n: number) => {
             : abs.toFixed(0);
     return (n < 0 ? '-' : '') + s;
 };
-
 const fmtFull = (n: number) =>
     Number(n).toLocaleString('fr-MA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' MAD';
 
-// ── Sub-components ─────────────────────────────────────────────────────────
+// ── Design atoms ─────────────────────────────────────────────────────────
 
-function GlobalKpiCard({
-    label, value, sub, positive, icon: Icon, color,
-}: {
-    label: string; value: string; sub?: string;
-    positive?: boolean; icon: React.ElementType; color: string;
-}) {
-    const isNeutral = positive === undefined;
-    const ring = isNeutral ? 'border-border'
-               : positive ? 'border-emerald-200 dark:border-emerald-800'
-               : 'border-rose-200 dark:border-rose-800';
-    const bg   = isNeutral ? 'bg-card'
-               : positive ? 'bg-emerald-50/60 dark:bg-emerald-950/20'
-               : 'bg-rose-50/60 dark:bg-rose-950/20';
-    const valCls = isNeutral ? 'text-foreground'
-                 : positive ? 'text-emerald-600 dark:text-emerald-400'
-                 : 'text-rose-600 dark:text-rose-400';
-
+/** Section divider — bilingual label (FR + AR), no rule line */
+function SectionDivider({ fr, ar, right }: { fr: string; ar: string; right?: React.ReactNode }) {
     return (
-        <div className={`rounded-2xl border ${ring} ${bg} p-4 flex flex-col gap-2 shadow-sm`}>
-            <div className="flex items-center justify-between">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: color + '22' }}>
-                    <Icon className="w-3.5 h-3.5" style={{ color }} />
-                </div>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-baseline gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground select-none">
+                    {fr}
+                </span>
+                <span className="text-[11px] text-muted-foreground/60 select-none" dir="rtl" lang="ar">
+                    {ar}
+                </span>
             </div>
-            <p className={`text-xl font-black font-mono leading-none ${valCls}`}>{value}</p>
-            {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}
+            {right}
         </div>
     );
 }
 
+/** Uniform KPI card — bilingual label (FR + AR) */
+function KpiCard({
+    fr, ar, value, unit = 'MAD', sub, sign, icon: Icon,
+}: {
+    fr: string; ar: string; value: string; unit?: string; sub?: string;
+    sign?: 'positive' | 'negative' | 'neutral'; icon?: React.ElementType;
+}) {
+    const numCls =
+        sign === 'positive' ? 'text-emerald-600 dark:text-emerald-400'
+      : sign === 'negative' ? 'text-rose-600 dark:text-rose-400'
+      : 'text-foreground';
+    return (
+        <div className="rounded-xl border border-border bg-card px-4 py-4 flex flex-col gap-3">
+            <div className="flex items-start justify-between gap-2">
+                <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground leading-none">
+                        {fr}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground/50 mt-0.5 leading-none" dir="rtl" lang="ar">
+                        {ar}
+                    </p>
+                </div>
+                {Icon && <Icon className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0 mt-0.5" />}
+            </div>
+            <div>
+                <span className={`text-xl font-bold font-mono tabular-nums leading-none ${numCls}`}>
+                    {value}
+                </span>
+                <span className="text-xs text-muted-foreground ml-1.5 font-mono">{unit}</span>
+            </div>
+            {sub && (
+                <p className="text-[10px] text-muted-foreground leading-relaxed border-t border-border/60 pt-2 mt-auto">
+                    {sub}
+                </p>
+            )}
+        </div>
+    );
+}
+
+/** Flux row inside the monthly panel */
 function FlowRow({ label, value, positive, icon: Icon }: {
     label: string; value: string; positive: boolean; icon: React.ElementType;
 }) {
     return (
-        <div className="flex items-center justify-between gap-3 py-2.5 border-b border-border/40 last:border-0">
-            <div className="flex items-center gap-2.5 min-w-0">
-                <span className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
-                    positive ? 'bg-emerald-100 dark:bg-emerald-950/50' : 'bg-rose-100 dark:bg-rose-950/50'
-                }`}>
-                    <Icon className={`w-3 h-3 ${positive ? 'text-emerald-500' : 'text-rose-500'}`} />
-                </span>
-                <span className="text-sm text-muted-foreground truncate">{label}</span>
+        <div className="flex items-center justify-between py-2 border-b border-border/40 last:border-0">
+            <div className="flex items-center gap-2 min-w-0">
+                <Icon className={`w-3 h-3 shrink-0 ${positive ? 'text-emerald-500' : 'text-rose-500'}`} />
+                <span className="text-xs text-muted-foreground truncate">{label}</span>
             </div>
-            <span className={`text-sm font-bold font-mono shrink-0 ${positive ? 'text-emerald-500' : 'text-rose-500'}`}>
-                {positive ? '+' : '−'}{value} MAD
+            <span className={`text-xs font-semibold font-mono tabular-nums shrink-0 ${
+                positive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+            }`}>
+                {positive ? '+' : '−'}{value}
             </span>
         </div>
     );
 }
 
-// ── Capital Deposit Modal ──────────────────────────────────────────────────
+// ── Capital modal ─────────────────────────────────────────────────────────
 
 function CapitalModal({ onClose }: { onClose: () => void }) {
-    const [mode, setMode]   = useState<'set' | 'add'>('add');
+    const [mode, setMode]     = useState<'set' | 'add'>('add');
     const [amount, setAmount] = useState('');
-    const [busy, setBusy]   = useState(false);
+    const [busy, setBusy]     = useState(false);
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -132,62 +153,46 @@ function CapitalModal({ onClose }: { onClose: () => void }) {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
             onClick={onClose}>
-            <div className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-5"
+            <div className="bg-card border border-border rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-5"
                 onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between">
+                <div className="flex items-start justify-between">
                     <div>
-                        <h2 className="font-bold text-foreground text-lg">Capital du compte</h2>
-                        <p className="text-sm text-muted-foreground">Déposer ou définir le capital initial</p>
+                        <h2 className="text-sm font-bold text-foreground">Mise à jour du capital</h2>
+                        <p className="text-xs text-muted-foreground mt-0.5">Déposer ou redéfinir le capital initial</p>
                     </div>
-                    <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-accent flex items-center justify-center text-muted-foreground">
-                        <X className="w-4 h-4" />
+                    <button onClick={onClose}
+                        className="w-7 h-7 rounded-lg hover:bg-muted flex items-center justify-center text-muted-foreground">
+                        <X className="w-3.5 h-3.5" />
                     </button>
                 </div>
-
-                {/* Mode selector */}
-                <div className="flex gap-2 bg-muted/40 rounded-xl p-1">
-                    <button type="button" onClick={() => setMode('add')}
-                        className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
-                            mode === 'add' ? 'bg-card shadow text-foreground' : 'text-muted-foreground'
-                        }`}>
-                        + Déposer un montant
-                    </button>
-                    <button type="button" onClick={() => setMode('set')}
-                        className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
-                            mode === 'set' ? 'bg-card shadow text-foreground' : 'text-muted-foreground'
-                        }`}>
-                        Définir le capital
-                    </button>
+                <div className="flex gap-1 bg-muted/50 rounded-xl p-1">
+                    {(['add', 'set'] as const).map(m => (
+                        <button key={m} type="button" onClick={() => setMode(m)}
+                            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                mode === m ? 'bg-card shadow text-foreground' : 'text-muted-foreground hover:text-foreground'
+                            }`}>
+                            {m === 'add' ? '+ Déposer' : 'Définir'}
+                        </button>
+                    ))}
                 </div>
-
                 <form onSubmit={submit} className="space-y-4">
                     <div>
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
-                            {mode === 'add' ? 'Montant à déposer' : 'Nouveau capital initial'}
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-2">
+                            {mode === 'add' ? 'Montant à ajouter' : 'Nouveau capital'}
                         </label>
                         <div className="relative">
-                            <input
-                                type="number" min="0" step="0.01"
-                                value={amount}
-                                onChange={e => setAmount(e.target.value)}
-                                placeholder="0.00"
-                                className="w-full rounded-xl border border-border bg-muted/30 px-4 py-3 pr-16 text-lg font-mono font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                                autoFocus
-                            />
-                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-bold">MAD</span>
+                            <input type="number" min="0" step="0.01" value={amount}
+                                onChange={e => setAmount(e.target.value)} placeholder="0.00" autoFocus
+                                className="w-full rounded-xl border border-border bg-background px-4 py-3 pr-14 text-xl font-mono font-bold text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-ring" />
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">MAD</span>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1.5">
-                            {mode === 'add'
-                                ? 'Ce montant sera ajouté au capital actuel.'
-                                : 'Remplace le capital initial par ce montant exact.'}
-                        </p>
                     </div>
                     <button type="submit" disabled={busy || !amount || Number(amount) <= 0}
-                        className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold py-3 transition-colors flex items-center justify-center gap-2">
-                        <CheckCircle2 className="w-4 h-4" />
-                        {busy ? 'Enregistrement…' : mode === 'add' ? 'Déposer' : 'Définir le capital'}
+                        className="w-full rounded-xl bg-primary text-primary-foreground text-xs font-semibold py-2.5 disabled:opacity-40 transition-colors flex items-center justify-center gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        {busy ? 'Enregistrement…' : mode === 'add' ? 'Confirmer le dépôt' : 'Définir le capital'}
                     </button>
                 </form>
             </div>
@@ -195,7 +200,7 @@ function CapitalModal({ onClose }: { onClose: () => void }) {
     );
 }
 
-// ── Main Page ──────────────────────────────────────────────────────────────
+// ── Page ──────────────────────────────────────────────────────────────────
 
 export default function FinancesIndex() {
     const {
@@ -211,26 +216,29 @@ export default function FinancesIndex() {
     const { props } = usePage<{ flash?: { success?: string } }>();
     const { resolvedAppearance } = useAppearance();
     const isDark    = resolvedAppearance === 'dark';
-    const gridColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.05)';
+    const gridColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
     const tickColor = isDark ? '#64748b' : '#94a3b8';
 
     const [showCapitalModal, setShowCapitalModal] = useState(false);
     const isProfit  = g.net_profit >= 0;
-    const balanceOk = account.balance > 0;
+    const balanceOk = account.balance >= 0;
 
     useEffect(() => {
         if (props.flash?.success) toast.success(props.flash.success);
     }, [props.flash?.success]);
 
     function navigate(delta: number) {
-        let m = selectedMonth + delta;
-        let y = selectedYear;
+        let m = selectedMonth + delta, y = selectedYear;
         if (m > 12) { m = 1;  y++; }
         if (m < 1)  { m = 12; y--; }
         router.get('/finances', { month: m, year: y }, { preserveScroll: true });
     }
 
-    /* ── Line chart — revenue vs charges vs gross profit ── */
+    const spentPct = account.initial_capital > 0
+        ? Math.min(100, Math.max(0, ((account.initial_capital - account.balance) / account.initial_capital) * 100))
+        : 0;
+
+    /* ── Charts ── */
     const lineData = {
         labels: monthlyTrend.map(m => m.label),
         datasets: [
@@ -242,13 +250,13 @@ export default function FinancesIndex() {
                     const { chartArea, ctx: c } = ctx.chart;
                     if (!chartArea) return 'transparent';
                     const g2 = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                    g2.addColorStop(0, 'rgba(34,197,94,0.18)');
+                    g2.addColorStop(0, 'rgba(34,197,94,0.12)');
                     g2.addColorStop(1, 'rgba(34,197,94,0)');
                     return g2;
                 },
-                fill: true, tension: 0.42, pointRadius: 3, pointHoverRadius: 6,
+                fill: true, tension: 0.38, pointRadius: 3, pointHoverRadius: 5,
                 pointBackgroundColor: '#22c55e', pointBorderColor: isDark ? '#0f172a' : '#fff',
-                pointBorderWidth: 2, borderWidth: 2.5,
+                pointBorderWidth: 2, borderWidth: 2,
             },
             {
                 label: 'Marge brute',
@@ -258,11 +266,11 @@ export default function FinancesIndex() {
                     const { chartArea, ctx: c } = ctx.chart;
                     if (!chartArea) return 'transparent';
                     const g2 = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                    g2.addColorStop(0, 'rgba(99,102,241,0.14)');
+                    g2.addColorStop(0, 'rgba(99,102,241,0.10)');
                     g2.addColorStop(1, 'rgba(99,102,241,0)');
                     return g2;
                 },
-                fill: true, tension: 0.42, pointRadius: 3, pointHoverRadius: 6,
+                fill: true, tension: 0.38, pointRadius: 3, pointHoverRadius: 5,
                 pointBackgroundColor: '#6366f1', pointBorderColor: isDark ? '#0f172a' : '#fff',
                 pointBorderWidth: 2, borderWidth: 2,
             },
@@ -274,11 +282,11 @@ export default function FinancesIndex() {
                     const { chartArea, ctx: c } = ctx.chart;
                     if (!chartArea) return 'transparent';
                     const g2 = c.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                    g2.addColorStop(0, 'rgba(249,115,22,0.13)');
+                    g2.addColorStop(0, 'rgba(249,115,22,0.09)');
                     g2.addColorStop(1, 'rgba(249,115,22,0)');
                     return g2;
                 },
-                fill: true, tension: 0.42, pointRadius: 3, pointHoverRadius: 6,
+                fill: true, tension: 0.38, pointRadius: 3, pointHoverRadius: 5,
                 pointBackgroundColor: '#f97316', pointBorderColor: isDark ? '#0f172a' : '#fff',
                 pointBorderWidth: 2, borderWidth: 2,
             },
@@ -296,7 +304,7 @@ export default function FinancesIndex() {
                 borderWidth: 1,
                 titleColor: isDark ? '#94a3b8' : '#64748b',
                 bodyColor: isDark ? '#f1f5f9' : '#0f172a',
-                padding: 12, boxPadding: 4,
+                padding: 10, boxPadding: 4,
                 callbacks: {
                     label: (ctx: any) =>
                         `  ${ctx.dataset.label} : ${Number(ctx.parsed.y).toLocaleString('fr-MA', { maximumFractionDigits: 0 })} MAD`,
@@ -304,27 +312,26 @@ export default function FinancesIndex() {
             },
         },
         scales: {
-            x: { grid: { display: false }, ticks: { color: tickColor, font: { size: 11, family: 'inherit' } }, border: { display: false } },
+            x: { grid: { display: false }, ticks: { color: tickColor, font: { size: 11 } }, border: { display: false } },
             y: {
                 grid: { color: gridColor },
-                ticks: { color: tickColor, font: { size: 10, family: 'inherit' }, callback: (v: any) => fmtK(Number(v)), maxTicksLimit: 5 },
+                ticks: { color: tickColor, font: { size: 10 }, callback: (v: any) => fmtK(Number(v)), maxTicksLimit: 5 },
                 border: { display: false },
             },
         },
     };
 
-    /* ── Doughnut — expense breakdown ── */
     const totalSorties = repartitionSorties.reduce((s, r) => s + r.amount, 0);
     const doughnutData = {
         labels: repartitionSorties.map(r => r.label),
         datasets: [{
             data: repartitionSorties.map(r => r.amount),
             backgroundColor: repartitionSorties.map(r => r.color),
-            borderWidth: 3, borderColor: isDark ? '#0f172a' : '#fff', hoverOffset: 8,
+            borderWidth: 2, borderColor: isDark ? '#161b24' : '#fff', hoverOffset: 6,
         }],
     };
     const doughnutOpts: any = {
-        responsive: true, maintainAspectRatio: false, cutout: '76%',
+        responsive: true, maintainAspectRatio: false, cutout: '72%',
         plugins: {
             legend: { display: false },
             tooltip: {
@@ -343,277 +350,365 @@ export default function FinancesIndex() {
 
     const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
 
-    /* ── Balance progress bar ── */
-    const spentPct = account.initial_capital > 0
-        ? Math.min(100, Math.max(0, ((account.initial_capital - account.balance) / account.initial_capital) * 100))
-        : 0;
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Finances" />
             {showCapitalModal && <CapitalModal onClose={() => setShowCapitalModal(false)} />}
 
-            <div className="p-6 flex flex-col gap-6 min-h-0">
+            <div className="px-6 py-5 space-y-6">
 
-                {/* ══ HEADER ══ */}
-                <div className="flex items-center justify-between flex-wrap gap-3">
+                {/* ══ PAGE HEADER ══════════════════════════════════════════════ */}
+                <div className="flex items-center justify-between gap-4 flex-wrap">
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">Finances</h1>
-                        <p className="text-sm text-muted-foreground">Tableau de bord financier complet</p>
+                        <h1 className="text-lg font-bold text-foreground tracking-tight">Finances</h1>
+                        <p className="text-xs text-muted-foreground mt-0.5">Vue d'ensemble financière — {account.name}</p>
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
                         <button onClick={() => router.visit('/charges')}
-                            className="h-9 px-4 text-sm font-medium rounded-xl border border-border bg-card hover:bg-accent text-foreground transition-colors">
+                            className="h-8 px-3 text-xs font-medium rounded-lg border border-border bg-card hover:bg-muted text-foreground transition-colors">
                             Charges
                         </button>
                         <button onClick={() => router.visit('/employees')}
-                            className="h-9 px-4 text-sm font-medium rounded-xl border border-border bg-card hover:bg-accent text-foreground transition-colors">
+                            className="h-8 px-3 text-xs font-medium rounded-lg border border-border bg-card hover:bg-muted text-foreground transition-colors">
                             Employés
                         </button>
                         <button onClick={() => setShowCapitalModal(true)}
-                            className="h-9 px-4 text-sm font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors flex items-center gap-1.5">
-                            <Plus className="w-3.5 h-3.5" /> Déposer / Capital
+                            className="h-8 px-3 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-1.5">
+                            <Plus className="w-3 h-3" /> Capital
                         </button>
                     </div>
                 </div>
 
-                {/* ══ VIRTUAL ACCOUNT HERO CARD ══ */}
-                <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-slate-800 via-slate-700 to-slate-900 p-6 shadow-xl">
-                    {/* decorative circles */}
-                    <div className="absolute -top-12 -right-12 w-52 h-52 rounded-full bg-white/5 pointer-events-none" />
-                    <div className="absolute -bottom-8 -left-8 w-36 h-36 rounded-full bg-white/5 pointer-events-none" />
+                {/* ══ COMPTE VIRTUEL — single unified card ═════════════════════ */}
+                <div className="rounded-2xl border border-border bg-card overflow-hidden">
+                    {/* Card header bar */}
+                    <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-muted/30">
+                        <div className="flex items-center gap-2">
+                            <Landmark className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                                Compte virtuel
+                            </span>
+                            <span className="text-[11px] text-muted-foreground/50" dir="rtl" lang="ar">الحساب الافتراضي</span>
+                            <span className="text-[10px] text-muted-foreground/40">·</span>
+                            <span className="text-[10px] text-muted-foreground">{account.name}</span>
+                        </div>
+                        <button onClick={() => setShowCapitalModal(true)}
+                            className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground hover:text-foreground transition-colors">
+                            <Plus className="w-3 h-3" /> Déposer
+                        </button>
+                    </div>
 
-                    <div className="relative flex flex-col md:flex-row md:items-end gap-6">
-                        {/* Left: balance + name */}
-                        <div className="flex-1 space-y-4">
-                            <div className="flex items-center gap-2">
-                                <Landmark className="w-5 h-5 text-white/60" />
-                                <span className="text-xs font-bold uppercase tracking-widest text-white/60">{account.name}</span>
-                            </div>
+                    {/* Three-column stat strip */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border">
+
+                        {/* Solde disponible */}
+                        <div className="px-6 py-5 space-y-3">
                             <div>
-                                <p className="text-xs font-bold uppercase tracking-wider text-white/50 mb-1">Solde disponible</p>
-                                <p className={`text-4xl font-black font-mono tracking-tight ${balanceOk ? 'text-white' : 'text-rose-400'}`}>
-                                    {fmtK(account.balance)} <span className="text-lg font-semibold text-white/50">MAD</span>
-                                </p>
-                                {!balanceOk && (
-                                    <div className="flex items-center gap-1.5 mt-1.5 text-rose-400 text-xs font-semibold">
-                                        <AlertTriangle className="w-3.5 h-3.5" />
-                                        Solde négatif — vérifiez vos achats et charges
-                                    </div>
-                                )}
+                                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Solde disponible</p>
+                                <p className="text-[11px] text-muted-foreground/50" dir="rtl" lang="ar">الرصيد المتاح</p>
                             </div>
-
-                            {/* Progress bar: spent from initial capital */}
+                            <p className={`text-4xl font-black font-mono tabular-nums leading-none ${
+                                balanceOk ? 'text-foreground' : 'text-rose-600 dark:text-rose-400'
+                            }`}>
+                                {fmtK(account.balance)}
+                                <span className="text-base font-semibold text-muted-foreground ml-2">MAD</span>
+                            </p>
+                            {!balanceOk && (
+                                <p className="text-xs text-rose-500 flex items-center gap-1">
+                                    <AlertTriangle className="w-3 h-3" /> Solde négatif
+                                </p>
+                            )}
                             {account.initial_capital > 0 && (
-                                <div className="space-y-1.5">
-                                    <div className="flex justify-between text-[10px] text-white/50">
-                                        <span>Capital utilisé</span>
-                                        <span>{spentPct.toFixed(1)}%</span>
-                                    </div>
-                                    <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                                <div className="space-y-1 pt-1">
+                                    <div className="h-[3px] rounded-full bg-muted overflow-hidden">
                                         <div className="h-full rounded-full transition-all duration-700"
                                             style={{
                                                 width: `${spentPct}%`,
-                                                backgroundColor: spentPct > 80 ? '#f97316' : spentPct > 60 ? '#eab308' : '#22c55e',
+                                                backgroundColor: spentPct > 80 ? '#ef4444' : spentPct > 55 ? '#f59e0b' : '#22c55e',
                                             }} />
                                     </div>
+                                    <p className="text-[10px] text-muted-foreground">
+                                        {spentPct.toFixed(1)}% du capital utilisé
+                                    </p>
                                 </div>
                             )}
                         </div>
 
-                        {/* Right: stat tiles */}
-                        <div className="flex gap-3 flex-wrap md:flex-nowrap">
-                            <div className="bg-white/10 rounded-2xl px-5 py-4 min-w-36">
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-white/50 mb-1">Capital initial</p>
-                                <p className="text-xl font-black font-mono text-white">{fmtK(account.initial_capital)}</p>
-                                <p className="text-[10px] text-white/40 mt-0.5">MAD</p>
+                        {/* Capital initial */}
+                        <div className="px-6 py-5 space-y-3">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Capital initial</p>
+                                <p className="text-[11px] text-muted-foreground/50" dir="rtl" lang="ar">رأس المال الأولي</p>
                             </div>
-                            <div className="bg-white/10 rounded-2xl px-5 py-4 min-w-36">
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-white/50 mb-1">Bénéfice net</p>
-                                <p className={`text-xl font-black font-mono ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`}>
-                                    {g.net_profit >= 0 ? '+' : ''}{fmtK(g.net_profit)}
-                                </p>
-                                <p className="text-[10px] text-white/40 mt-0.5">{g.net_margin_pct}% marge</p>
+                            <p className="text-4xl font-black font-mono tabular-nums leading-none text-foreground">
+                                {fmtK(account.initial_capital)}
+                                <span className="text-base font-semibold text-muted-foreground ml-2">MAD</span>
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                                Apport de départ au compte
+                            </p>
+                        </div>
+
+                        {/* Bénéfice net */}
+                        <div className="px-6 py-5 space-y-3">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Bénéfice net</p>
+                                <p className="text-[11px] text-muted-foreground/50" dir="rtl" lang="ar">صافي الربح</p>
                             </div>
-                            <button onClick={() => setShowCapitalModal(true)}
-                                className="bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 rounded-2xl px-5 py-4 min-w-36 transition-colors text-left">
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 mb-1">Déposer</p>
-                                <p className="text-xl font-black font-mono text-white">+</p>
-                                <p className="text-[10px] text-white/40 mt-0.5">Ajouter du capital</p>
-                            </button>
+                            <p className={`text-4xl font-black font-mono tabular-nums leading-none ${
+                                isProfit ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                            }`}>
+                                {g.net_profit >= 0 ? '+' : ''}{fmtK(g.net_profit)}
+                                <span className="text-base font-semibold text-muted-foreground ml-2">MAD</span>
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                                Marge nette <span className="font-mono tabular-nums text-foreground font-semibold">{g.net_margin_pct}%</span>
+                                &ensp;·&ensp;Pertes incluses
+                            </p>
                         </div>
                     </div>
                 </div>
 
-                {/* ══ GLOBAL KPI GRID — 8 cards ══ */}
+                {/* ══ INDICATEURS GLOBAUX ══════════════════════════════════════ */}
+                <SectionDivider fr="Indicateurs financiers" ar="المؤشرات المالية" />
+
+                {/* Row 1: primary metrics */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <GlobalKpiCard
-                        label="Ventes totales" icon={TrendingUp} color="#22c55e"
-                        value={`${fmtK(g.total_sales)} MAD`}
-                        sub="Chiffre d'affaires net (all-time)"
-                        positive
+                    <KpiCard
+                        fr="CA ventes nettes" ar="رقم الأعمال الصافي" icon={TrendingUp}
+                        value={fmtK(g.total_sales)} sign="positive"
+                        sub="Retours clients déduits"
                     />
-                    <GlobalKpiCard
-                        label="Total achats" icon={ShoppingCart} color="#3b82f6"
-                        value={`${fmtK(g.total_purchases)} MAD`}
-                        sub="Achats nets fournisseurs"
-                        positive={false}
+                    <KpiCard
+                        fr="Achats fournisseurs" ar="مشتريات الموردين" icon={ShoppingCart}
+                        value={fmtK(g.total_purchases)} sign="negative"
+                        sub="Retours fournisseurs déduits"
                     />
-                    <GlobalKpiCard
-                        label="Marge brute" icon={BarChart3} color="#6366f1"
-                        value={`${fmtK(g.gross_profit)} MAD`}
-                        sub={`Marge ${g.gross_margin_pct}% · COGS ${fmtK(g.cogs)} MAD`}
-                        positive={g.gross_profit >= 0}
+                    <KpiCard
+                        fr="Marge brute" ar="الهامش الإجمالي" icon={BarChart3}
+                        value={fmtK(g.gross_profit)}
+                        sign={g.gross_profit >= 0 ? 'positive' : 'negative'}
+                        sub={`${g.gross_margin_pct}% · COGS ${fmtK(g.cogs)} MAD`}
                     />
-                    <GlobalKpiCard
-                        label="Total charges & salaires" icon={Wallet} color="#f59e0b"
-                        value={`${fmtK(g.total_expenses)} MAD`}
-                        sub={`Charges ${fmtK(g.total_charges)} · Salaires ${fmtK(g.total_salaries)}`}
-                        positive={false}
-                    />
-                    <GlobalKpiCard
-                        label="Capital initial" icon={PiggyBank} color="#64748b"
-                        value={`${fmtK(account.initial_capital)} MAD`}
-                        sub="Apport initial au compte"
-                    />
-                    <GlobalKpiCard
-                        label="Pertes produits" icon={Package} color="#ef4444"
-                        value={`${fmtK(g.total_losses)} MAD`}
-                        sub="Stock endommagé non retourné"
-                        positive={false}
-                    />
-                    <GlobalKpiCard
-                        label="Solde clients" icon={Users} color="#06b6d4"
-                        value={`${fmtK(Math.abs(soldes.clients))} MAD`}
-                        sub={soldes.clients > 0 ? 'Montant à encaisser' : 'Solde créditeur'}
-                        positive={soldes.clients <= 0}
-                    />
-                    <GlobalKpiCard
-                        label="Bénéfice net" icon={isProfit ? TrendingUp : TrendingDown} color={isProfit ? '#22c55e' : '#ef4444'}
-                        value={`${g.net_profit >= 0 ? '+' : ''}${fmtK(g.net_profit)} MAD`}
-                        sub={`Marge ${g.net_margin_pct}% · Pertes incluses`}
-                        positive={isProfit}
+                    <KpiCard
+                        fr="Charges & salaires" ar="المصاريف والرواتب" icon={Wallet}
+                        value={fmtK(g.total_expenses)} sign="negative"
+                        sub={`Ch. ${fmtK(g.total_charges)} · Sal. ${fmtK(g.total_salaries)} MAD`}
                     />
                 </div>
 
-                {/* ══ PROFIT FORMULA ROW ══ */}
-                <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-3">
-                        Formule bénéfice net (all-time)
-                    </p>
-                    <div className="flex items-center gap-2 flex-wrap text-sm font-mono">
-                        <span className="rounded-lg bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 px-3 py-1.5 font-bold">
-                            Marge brute {fmtK(g.gross_profit)} MAD
-                        </span>
-                        <span className="text-muted-foreground font-sans">−</span>
-                        <span className="rounded-lg bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-3 py-1.5 font-bold">
-                            Charges {fmtK(g.total_charges)} MAD
-                        </span>
-                        <span className="text-muted-foreground font-sans">−</span>
-                        <span className="rounded-lg bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 px-3 py-1.5 font-bold">
-                            Salaires {fmtK(g.total_salaries)} MAD
-                        </span>
-                        <span className="text-muted-foreground font-sans">−</span>
-                        <span className="rounded-lg bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 px-3 py-1.5 font-bold">
-                            Pertes {fmtK(g.total_losses)} MAD
-                        </span>
-                        <span className="text-muted-foreground font-sans">=</span>
-                        <span className={`rounded-lg px-3 py-1.5 font-bold ${
+                {/* Row 2: secondary metrics */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <KpiCard
+                        fr="Capital initial" ar="رأس المال الأولي" icon={PiggyBank}
+                        value={fmtK(account.initial_capital)}
+                        sub="Apport de départ"
+                    />
+                    <KpiCard
+                        fr="Pertes produits" ar="خسائر المنتجات" icon={Package}
+                        value={fmtK(g.total_losses)}
+                        sign={g.total_losses > 0 ? 'negative' : 'positive'}
+                        sub="Stock endommagé restant"
+                    />
+                    <KpiCard
+                        fr="Créances clients" ar="ذمم العملاء" icon={Users}
+                        value={fmtK(Math.abs(soldes.clients))}
+                        sign={soldes.clients > 0 ? 'neutral' : 'positive'}
+                        sub={soldes.clients > 0 ? 'À encaisser' : soldes.clients < 0 ? 'Avoir' : 'Soldé'}
+                    />
+                    <KpiCard
+                        fr="Dettes fournisseurs" ar="ذمم الموردين" icon={Truck}
+                        value={fmtK(Math.abs(soldes.fournisseurs))}
+                        sign={soldes.fournisseurs > 0 ? 'negative' : 'positive'}
+                        sub={soldes.fournisseurs > 0 ? 'À décaisser' : soldes.fournisseurs < 0 ? 'Avoir' : 'Soldé'}
+                    />
+                </div>
+
+                {/* ══ FORMULE RÉSULTAT ═════════════════════════════════════════ */}
+                <SectionDivider fr="Formule du résultat net" ar="معادلة صافي الربح" />
+
+                <div className="rounded-xl border border-border bg-card px-5 py-4">
+                    <div className="flex items-center gap-2 flex-wrap font-mono text-xs tabular-nums">
+                        {[
+                            { label: 'Marge brute',   value: fmtK(g.gross_profit),    cls: 'bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800/50' },
+                            { label: 'Charges',        value: fmtK(g.total_charges),   cls: 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/50' },
+                            { label: 'Salaires',       value: fmtK(g.total_salaries),  cls: 'bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800/50' },
+                            { label: 'Pertes',         value: fmtK(g.total_losses),    cls: 'bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/50' },
+                        ].map(({ label, value, cls }, i) => (
+                            <>
+                                {i > 0 && <span key={`op-${i}`} className="text-sm text-muted-foreground font-light">−</span>}
+                                <span key={label} className={`inline-flex flex-col border rounded-lg px-3 py-2 ${cls}`}>
+                                    <span className="text-[9px] uppercase tracking-widest opacity-70 font-bold">{label}</span>
+                                    <span className="font-bold text-sm">{value} MAD</span>
+                                </span>
+                            </>
+                        ))}
+                        <span className="text-sm text-muted-foreground font-light">=</span>
+                        <span className={`inline-flex flex-col border rounded-lg px-3 py-2 font-bold ${
                             isProfit
-                                ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
-                                : 'bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400'
+                                ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/50'
+                                : 'bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/50'
                         }`}>
-                            {g.net_profit >= 0 ? '+' : ''}{fmtK(g.net_profit)} MAD
+                            <span className="text-[9px] uppercase tracking-widest opacity-70 font-bold">Résultat net</span>
+                            <span className="font-bold text-sm">{g.net_profit >= 0 ? '+' : ''}{fmtK(g.net_profit)} MAD</span>
                         </span>
                     </div>
                 </div>
 
-                {/* ══ PERIOD SELECTOR ══ */}
-                <div className="flex items-center gap-3 flex-wrap">
-                    <p className="text-sm font-bold text-muted-foreground">Détail mensuel :</p>
-                    <div className="flex items-center bg-card border border-border rounded-xl overflow-hidden h-9">
-                        <button onClick={() => navigate(-1)}
-                            className="h-full px-2.5 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors border-r border-border">
-                            <ChevronLeft className="w-4 h-4" />
-                        </button>
-                        <select value={selectedMonth}
-                            onChange={e => router.get('/finances', { month: Number(e.target.value), year: selectedYear }, { preserveScroll: true })}
-                            className="h-full text-sm font-semibold text-foreground bg-transparent border-0 outline-none cursor-pointer px-2 appearance-none">
-                            {MONTHS_FR.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
-                        </select>
-                        <select value={selectedYear}
-                            onChange={e => router.get('/finances', { month: selectedMonth, year: Number(e.target.value) }, { preserveScroll: true })}
-                            className="h-full text-sm font-semibold text-foreground bg-transparent border-0 outline-none cursor-pointer px-2 appearance-none border-l border-border">
-                            {years.map(y => <option key={y} value={y}>{y}</option>)}
-                        </select>
-                        <button onClick={() => navigate(1)}
-                            className="h-full px-2.5 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors border-l border-border">
-                            <ChevronRight className="w-4 h-4" />
-                        </button>
-                    </div>
-                    <span className="text-sm text-muted-foreground">— {monthLabel}</span>
-                </div>
-
-                {/* ══ CHARTS + MONTHLY DETAIL ══ */}
-                <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 items-start">
-
-                    {/* ── LEFT: charts ── */}
-                    <div className="xl:col-span-3 flex flex-col gap-4">
-
-                        {/* Line chart */}
-                        <div className="bg-card border border-border rounded-2xl p-5">
-                            <div className="flex items-center justify-between mb-4">
-                                <div>
-                                    <h3 className="font-bold text-foreground">Ventes · Marge brute · Dépenses</h3>
-                                    <p className="text-xs text-muted-foreground">6 derniers mois</p>
-                                </div>
-                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                    <span className="flex items-center gap-1.5"><span className="w-5 h-0.5 rounded-full bg-emerald-500 inline-block" /> Ventes</span>
-                                    <span className="flex items-center gap-1.5"><span className="w-5 h-0.5 rounded-full bg-indigo-500 inline-block" /> Marge</span>
-                                    <span className="flex items-center gap-1.5"><span className="w-5 h-0.5 rounded-full bg-orange-400 inline-block" /> Dépenses</span>
-                                </div>
+                {/* ══ ANALYSE MENSUELLE — section with inline period picker ═════ */}
+                <SectionDivider
+                    fr="Analyse mensuelle" ar="التحليل الشهري"
+                    right={
+                        <div className="flex items-center gap-1.5">
+                            <button onClick={() => navigate(-1)}
+                                className="w-6 h-6 rounded-md border border-border bg-card hover:bg-muted flex items-center justify-center text-muted-foreground transition-colors">
+                                <ChevronLeft className="w-3 h-3" />
+                            </button>
+                            <div className="flex items-center bg-card border border-border rounded-lg overflow-hidden h-7">
+                                <select value={selectedMonth}
+                                    onChange={e => router.get('/finances', { month: Number(e.target.value), year: selectedYear }, { preserveScroll: true })}
+                                    className="text-xs font-semibold text-foreground bg-transparent border-0 outline-none cursor-pointer px-2 appearance-none h-full">
+                                    {MONTHS_FR.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
+                                </select>
+                                <span className="text-border text-xs">|</span>
+                                <select value={selectedYear}
+                                    onChange={e => router.get('/finances', { month: selectedMonth, year: Number(e.target.value) }, { preserveScroll: true })}
+                                    className="text-xs font-semibold text-foreground bg-transparent border-0 outline-none cursor-pointer px-2 appearance-none h-full">
+                                    {years.map(y => <option key={y} value={y}>{y}</option>)}
+                                </select>
                             </div>
-                            <div className="h-56">
-                                <Line data={lineData} options={lineOpts} />
+                            <button onClick={() => navigate(1)}
+                                className="w-6 h-6 rounded-md border border-border bg-card hover:bg-muted flex items-center justify-center text-muted-foreground transition-colors">
+                                <ChevronRight className="w-3 h-3" />
+                            </button>
+                            <span className="text-[10px] text-muted-foreground pl-1">{monthLabel}</span>
+                        </div>
+                    }
+                />
+
+                {/* Trend chart + Monthly flux — 2-col */}
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">
+
+                    {/* Line chart — 2 cols */}
+                    <div className="xl:col-span-2 rounded-2xl border border-border bg-card overflow-hidden">
+                        <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-muted/20">
+                            <div>
+                                <div className="flex items-baseline gap-2">
+                                    <p className="text-xs font-semibold text-foreground">Évolution — 6 derniers mois</p>
+                                    <p className="text-[11px] text-muted-foreground/60" dir="rtl" lang="ar">التطور خلال 6 أشهر</p>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground mt-0.5">Ventes · Marge brute · Dépenses</p>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                {[
+                                    { color: '#22c55e', label: 'Ventes' },
+                                    { color: '#6366f1', label: 'Marge' },
+                                    { color: '#f97316', label: 'Dépenses' },
+                                ].map(({ color, label }) => (
+                                    <span key={label} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                                        <span className="w-4 h-[2px] rounded-full inline-block" style={{ backgroundColor: color }} />
+                                        {label}
+                                    </span>
+                                ))}
                             </div>
                         </div>
+                        <div className="px-5 py-4 h-52">
+                            <Line data={lineData} options={lineOpts} />
+                        </div>
+                    </div>
 
-                        {/* Doughnut */}
-                        <div className="bg-card border border-border rounded-2xl p-5">
-                            <div className="mb-4">
-                                <h3 className="font-bold text-foreground">Répartition des sorties</h3>
-                                <p className="text-xs text-muted-foreground">Achats, charges et salaires · {monthLabel}</p>
+                    {/* Monthly flux — 1 col */}
+                    <div className="rounded-2xl border border-border bg-card overflow-hidden">
+                        <div className="px-5 py-3 border-b border-border bg-muted/20">
+                            <div className="flex items-baseline gap-2">
+                                <p className="text-xs font-semibold text-foreground">Flux financiers</p>
+                                <p className="text-[11px] text-muted-foreground/60" dir="rtl" lang="ar">التدفقات المالية</p>
                             </div>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">{monthLabel}</p>
+                        </div>
+                        <div className="px-5 py-4 space-y-4">
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-600 dark:text-emerald-400 mb-2">Entrées</p>
+                                <FlowRow label="Ventes clients"       value={`${fmtK(kpis.ca_brut)} MAD`}          positive icon={ArrowUpRight} />
+                                <FlowRow label="Encaissements"        value={`${fmtK(kpis.encaissements)} MAD`}     positive icon={ArrowUpRight} />
+                                {kpis.retours_four_remb > 0 && (
+                                    <FlowRow label="Ret. fournisseur" value={`${fmtK(kpis.retours_four_remb)} MAD`} positive icon={ArrowUpRight} />
+                                )}
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-rose-600 dark:text-rose-400 mb-2">Sorties</p>
+                                <FlowRow label="Achats fournisseurs" value={`${fmtK(kpis.achats_nets)} MAD`}    positive={false} icon={ArrowDownRight} />
+                                <FlowRow label="Charges"             value={`${fmtK(kpis.charges_total)} MAD`}  positive={false} icon={ArrowDownRight} />
+                                <FlowRow label="Salaires payés"      value={`${fmtK(kpis.salaires_payes)} MAD`} positive={false} icon={ArrowDownRight} />
+                                {kpis.retours_clients > 0 && (
+                                    <FlowRow label="Retours clients" value={`${fmtK(kpis.retours_clients)} MAD`} positive={false} icon={ArrowDownRight} />
+                                )}
+                            </div>
+                            <div className={`rounded-xl px-4 py-3 flex items-center justify-between ${
+                                kpis.benefice_net >= 0
+                                    ? 'bg-emerald-50 dark:bg-emerald-950/30'
+                                    : 'bg-rose-50 dark:bg-rose-950/30'
+                            }`}>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                    Résultat {monthLabel.split(' ')[0]}
+                                </span>
+                                <span className={`text-sm font-bold font-mono tabular-nums ${
+                                    kpis.benefice_net >= 0
+                                        ? 'text-emerald-700 dark:text-emerald-400'
+                                        : 'text-rose-600 dark:text-rose-400'
+                                }`}>
+                                    {kpis.benefice_net >= 0 ? '+' : '−'}{fmtK(Math.abs(kpis.benefice_net))} MAD
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ══ RÉPARTITION — doughnut + balances + alert ════════════════ */}
+                <SectionDivider fr="Répartition & soldes" ar="التوزيع والأرصدة" />
+
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">
+
+                    {/* Doughnut — 2 cols */}
+                    <div className="xl:col-span-2 rounded-2xl border border-border bg-card overflow-hidden">
+                        <div className="px-5 py-3 border-b border-border bg-muted/20">
+                            <div className="flex items-baseline gap-2">
+                                <p className="text-xs font-semibold text-foreground">Répartition des sorties</p>
+                                <p className="text-[11px] text-muted-foreground/60" dir="rtl" lang="ar">توزيع المصروفات</p>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">Achats, charges, salaires · {monthLabel}</p>
+                        </div>
+                        <div className="px-5 py-5">
                             {repartitionSorties.length === 0 ? (
-                                <div className="flex items-center justify-center h-28 text-sm text-muted-foreground">
+                                <div className="flex items-center justify-center h-24 text-sm text-muted-foreground">
                                     Aucune dépense ce mois
                                 </div>
                             ) : (
                                 <div className="flex items-center gap-8">
-                                    <div className="relative shrink-0 w-36 h-36">
+                                    <div className="relative shrink-0 w-32 h-32">
                                         <Doughnut data={doughnutData} options={doughnutOpts} />
                                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                            <p className="text-[10px] text-muted-foreground">Total</p>
-                                            <p className="text-sm font-bold font-mono text-foreground leading-tight">{fmtK(totalSorties)}</p>
-                                            <p className="text-[10px] text-muted-foreground">MAD</p>
+                                            <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Total</p>
+                                            <p className="text-sm font-bold font-mono tabular-nums text-foreground">{fmtK(totalSorties)}</p>
+                                            <p className="text-[9px] text-muted-foreground">MAD</p>
                                         </div>
                                     </div>
-                                    <div className="flex-1 min-w-0 space-y-2.5">
+                                    <div className="flex-1 min-w-0 space-y-3">
                                         {repartitionSorties.map(row => {
                                             const pct = totalSorties > 0 ? (row.amount / totalSorties) * 100 : 0;
                                             return (
                                                 <div key={row.key}>
                                                     <div className="flex items-center justify-between mb-1">
                                                         <div className="flex items-center gap-2 min-w-0">
-                                                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: row.color }} />
-                                                            <span className="text-sm text-foreground truncate">{row.label}</span>
+                                                            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: row.color }} />
+                                                            <span className="text-xs text-foreground truncate">{row.label}</span>
                                                         </div>
                                                         <div className="flex items-center gap-3 shrink-0 ml-3">
-                                                            <span className="text-xs font-mono font-semibold text-foreground">{fmtK(row.amount)} MAD</span>
-                                                            <span className="text-xs text-muted-foreground w-8 text-right">{pct.toFixed(0)}%</span>
+                                                            <span className="text-xs font-mono tabular-nums font-semibold text-foreground">{fmtK(row.amount)} MAD</span>
+                                                            <span className="text-[10px] text-muted-foreground w-7 text-right tabular-nums">{pct.toFixed(0)}%</span>
                                                         </div>
                                                     </div>
-                                                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                                                    <div className="h-1 rounded-full bg-muted overflow-hidden">
                                                         <div className="h-full rounded-full transition-all duration-500"
                                                             style={{ width: `${pct}%`, backgroundColor: row.color }} />
                                                     </div>
@@ -626,100 +721,82 @@ export default function FinancesIndex() {
                         </div>
                     </div>
 
-                    {/* ── RIGHT: monthly flux + soldes ── */}
-                    <div className="xl:col-span-2 flex flex-col gap-4">
+                    {/* Balances — 1 col */}
+                    <div className="flex flex-col gap-3">
 
-                        {/* Monthly flux */}
-                        <div className="bg-card border border-border rounded-2xl p-5">
-                            <div className="mb-4">
-                                <h3 className="font-bold text-foreground">Flux financiers</h3>
-                                <p className="text-xs text-muted-foreground">{monthLabel}</p>
+                        {/* Clients */}
+                        <div className="rounded-xl border border-border bg-card overflow-hidden">
+                            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/20">
+                                <div>
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Solde clients</p>
+                                    <p className="text-[11px] text-muted-foreground/50" dir="rtl" lang="ar">رصيد العملاء</p>
+                                </div>
+                                <Users className="w-3.5 h-3.5 text-muted-foreground/50" />
                             </div>
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 mb-1">Entrées</p>
-                            <FlowRow label="Ventes clients"     value={fmtK(kpis.ca_brut)}         positive icon={ArrowUpRight} />
-                            <FlowRow label="Encaissements"      value={fmtK(kpis.encaissements)}    positive icon={ArrowUpRight} />
-                            {kpis.retours_four_remb > 0 && (
-                                <FlowRow label="Ret. four. (remb.)" value={fmtK(kpis.retours_four_remb)} positive icon={ArrowUpRight} />
-                            )}
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-rose-500 mb-1 mt-4">Sorties</p>
-                            <FlowRow label="Achats fournisseurs" value={fmtK(kpis.achats_nets)}    positive={false} icon={ArrowDownRight} />
-                            <FlowRow label="Charges"             value={fmtK(kpis.charges_total)}  positive={false} icon={ArrowDownRight} />
-                            <FlowRow label="Salaires payés"      value={fmtK(kpis.salaires_payes)} positive={false} icon={ArrowDownRight} />
-                            {kpis.retours_clients > 0 && (
-                                <FlowRow label="Retours clients" value={fmtK(kpis.retours_clients)} positive={false} icon={ArrowDownRight} />
-                            )}
-                            <div className={`mt-4 rounded-xl px-4 py-3 flex items-center justify-between ${
-                                kpis.benefice_net >= 0 ? 'bg-emerald-50 dark:bg-emerald-950/30' : 'bg-rose-50 dark:bg-rose-950/30'
-                            }`}>
-                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Résultat mensuel</span>
-                                <span className={`text-sm font-bold font-mono ${kpis.benefice_net >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                                    {kpis.benefice_net >= 0 ? '+' : '−'}{fmtK(Math.abs(kpis.benefice_net))} MAD
-                                </span>
+                            <div className="px-4 py-3">
+                                <p className={`text-xl font-bold font-mono tabular-nums ${
+                                    soldes.clients > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'
+                                }`}>
+                                    {fmtK(Math.abs(soldes.clients))} MAD
+                                </p>
+                                <p className="text-[10px] text-muted-foreground mt-1">
+                                    {soldes.clients > 0 ? 'Créances à encaisser'
+                                    : soldes.clients < 0 ? 'Avoir clients'
+                                    : 'Comptes soldés'}
+                                </p>
                             </div>
                         </div>
 
-                        {/* Client balance */}
-                        <div className="bg-card border border-border rounded-2xl p-5">
-                            <div className="flex items-start justify-between mb-3">
+                        {/* Fournisseurs */}
+                        <div className="rounded-xl border border-border bg-card overflow-hidden">
+                            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/20">
                                 <div>
-                                    <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Solde clients</p>
-                                    <p className="text-[10px] text-muted-foreground mt-0.5">Créances non encaissées</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Solde fournisseurs</p>
+                                    <p className="text-[11px] text-muted-foreground/50" dir="rtl" lang="ar">رصيد الموردين</p>
                                 </div>
-                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                                    soldes.clients > 0 ? 'bg-amber-100 dark:bg-amber-950/40 text-amber-500' : 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-500'
-                                }`}>
-                                    <Users className="w-4 h-4" />
-                                </div>
+                                <Truck className="w-3.5 h-3.5 text-muted-foreground/50" />
                             </div>
-                            <p className={`text-2xl font-bold font-mono leading-none ${soldes.clients > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>
-                                {fmtK(Math.abs(soldes.clients))} MAD
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-2">
-                                {soldes.clients > 0 ? 'Montant encore à encaisser' : soldes.clients < 0 ? 'Avoir clients' : 'Compte soldé'}
-                            </p>
-                        </div>
-
-                        {/* Supplier balance */}
-                        <div className="bg-card border border-border rounded-2xl p-5">
-                            <div className="flex items-start justify-between mb-3">
-                                <div>
-                                    <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Solde fournisseurs</p>
-                                    <p className="text-[10px] text-muted-foreground mt-0.5">Dettes restantes</p>
-                                </div>
-                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                                    soldes.fournisseurs > 0 ? 'bg-rose-100 dark:bg-rose-950/40 text-rose-500' : 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-500'
+                            <div className="px-4 py-3">
+                                <p className={`text-xl font-bold font-mono tabular-nums ${
+                                    soldes.fournisseurs > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'
                                 }`}>
-                                    <Truck className="w-4 h-4" />
-                                </div>
+                                    {fmtK(Math.abs(soldes.fournisseurs))} MAD
+                                </p>
+                                <p className="text-[10px] text-muted-foreground mt-1">
+                                    {soldes.fournisseurs > 0 ? 'Dettes fournisseurs restantes'
+                                    : soldes.fournisseurs < 0 ? 'Avoir fournisseur'
+                                    : 'Aucune dette'}
+                                </p>
                             </div>
-                            <p className={`text-2xl font-bold font-mono leading-none ${soldes.fournisseurs > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
-                                {fmtK(Math.abs(soldes.fournisseurs))} MAD
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-2">
-                                {soldes.fournisseurs > 0 ? 'Montant encore à décaisser' : soldes.fournisseurs < 0 ? 'Avoir fournisseur' : 'Compte soldé'}
-                            </p>
                         </div>
 
                         {/* Losses alert */}
                         {g.total_losses > 0 && (
-                            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/60 rounded-2xl p-4">
-                                <div className="flex items-start gap-3">
-                                    <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="text-sm font-bold text-red-700 dark:text-red-400">Stock endommagé</p>
-                                        <p className="text-xs text-red-600 dark:text-red-500 mt-0.5">
-                                            {fmtFull(g.total_losses)} en pertes potentielles — produits non retournés aux fournisseurs.
-                                        </p>
-                                        <button className="mt-2 text-xs font-semibold text-red-600 dark:text-red-400 underline underline-offset-2"
-                                            onClick={() => router.visit('/stock')}>
-                                            Voir le stock endommagé →
-                                        </button>
-                                    </div>
+                            <div className="rounded-xl border border-amber-200 dark:border-amber-800/60 bg-card overflow-hidden">
+                                <div className="flex items-center gap-2 px-4 py-3 border-b border-amber-200 dark:border-amber-800/60 bg-amber-50/60 dark:bg-amber-950/20">
+                                    <AlertTriangle className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-amber-700 dark:text-amber-400">
+                                        Stock endommagé
+                                    </p>
+                                    <p className="text-[11px] text-amber-600/60 dark:text-amber-400/50" dir="rtl" lang="ar">المخزون التالف</p>
+                                </div>
+                                <div className="px-4 py-3">
+                                    <p className="text-xl font-bold font-mono tabular-nums text-amber-600 dark:text-amber-400">
+                                        {fmtK(g.total_losses)} MAD
+                                    </p>
+                                    <p className="text-[10px] text-muted-foreground mt-1 leading-relaxed">
+                                        Pertes potentielles — produits non retournés aux fournisseurs.
+                                    </p>
+                                    <button className="mt-2 text-[10px] font-semibold text-amber-700 dark:text-amber-400 underline underline-offset-2 flex items-center gap-0.5"
+                                        onClick={() => router.visit('/stock')}>
+                                        Voir le stock <ArrowRight className="w-3 h-3" />
+                                    </button>
                                 </div>
                             </div>
                         )}
                     </div>
                 </div>
+
             </div>
         </AppLayout>
     );
